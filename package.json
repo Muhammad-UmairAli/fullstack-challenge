@@ -1,0 +1,24 @@
+{
+  "name": "fullstack-challenge",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Monorepo for fullstack challenge",
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint",
+    "type-check": "turbo type-check",
+    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.33.0",
+  "devDependencies": {
+    "prettier": "^3.4.2",
+    "turbo": "^2.9.3",
+    "@repo/typescript-config": "workspace:*",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*"
+  }
+}
