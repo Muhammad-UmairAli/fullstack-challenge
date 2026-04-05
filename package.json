@@ -8,17 +8,26 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "type-check": "turbo type-check",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\""
+    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "packageManager": "pnpm@10.33.0",
   "devDependencies": {
-    "prettier": "^3.4.2",
-    "turbo": "^2.9.3",
-    "@repo/typescript-config": "workspace:*",
     "@repo/eslint-config": "workspace:*",
-    "@repo/prettier-config": "workspace:*"
+    "@repo/prettier-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.4.2",
+    "turbo": "^2.9.3"
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "turbo lint",
+      "prettier --write"
+    ]
   }
 }
