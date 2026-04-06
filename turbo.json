@@ -6,7 +6,6 @@
       "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
     },
     "lint": {
-      "dependsOn": ["^lint"],
       "inputs": [
         "**/*.ts",
         "**/*.tsx",
@@ -17,7 +16,6 @@
       ]
     },
     "type-check": {
-      "dependsOn": ["^type-check"],
       "outputs": []
     },
     "dev": {

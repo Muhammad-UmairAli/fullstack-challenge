@@ -1,10 +1,19 @@
-import js from "@eslint/js";
-import tseslint from "typescript-eslint";
-import prettierConfig from "eslint-config-prettier";
-import prettierPlugin from "eslint-plugin-prettier";
+import js from '@eslint/js';
+import tseslint from 'typescript-eslint';
+import prettierConfig from 'eslint-config-prettier';
+import prettierPlugin from 'eslint-plugin-prettier';
 
 /** @type {import("eslint").Linter.Config[]} */
 export const baseConfig = tseslint.config(
+  {
+    ignores: [
+      '**/dist/**',
+      '**/.next/**',
+      '**/.turbo/**',
+      '**/coverage/**',
+      '**/next-env.d.ts',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   prettierConfig,
@@ -13,12 +22,12 @@ export const baseConfig = tseslint.config(
       prettier: prettierPlugin,
     },
     rules: {
-      "no-console": "warn",
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { argsIgnorePattern: "^_" },
+      'no-console': 'warn',
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_' },
       ],
-      "prettier/prettier": "error",
+      'prettier/prettier': 'error',
     },
   },
 );
