@@ -7,7 +7,14 @@
     },
     "lint": {
       "dependsOn": ["^lint"],
-      "inputs": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx", "eslint.config.js"]
+      "inputs": [
+        "**/*.ts",
+        "**/*.tsx",
+        "**/*.js",
+        "**/*.jsx",
+        "**/*.mjs",
+        "eslint.config.mjs"
+      ]
     },
     "type-check": {
       "dependsOn": ["^type-check"],
