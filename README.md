@@ -8,15 +8,17 @@ Welcome to the **Fullstack Challenge** monorepo. This project is built with a mo
 
 - **Monorepo**: [Turborepo](https://turbo.build/) + [PNPM Workspaces](https://pnpm.io/workspaces)
 - **Frontend**: [Next.js 15+](https://nextjs.org/) (App Router)
-- **Backend**: [NestJS 11+](https://nestjs.com/) (Module-based architecture)
-- **Styling**: [Tailwind CSS 4.0](https://tailwindcss.com/) (Modern CSS-first approach)
-- **Language**: [TypeScript 5+](https://www.typescriptlang.org/) (Strict mode, NodeNext resolution)
+- **Backend**: [NestJS 11+](https://nestjs.com/) (Modular Architecture)
+- **Styling**: [Tailwind CSS 4.0](https://tailwindcss.com/)
+- **Validation**: [Zod](https://zod.dev/) (Single Source of Truth)
 
-### Quality Control
+### Quality Control & Security
 
-- **Linting**: [ESLint 9+](https://eslint.org/) (Flat Config)
-- **Formatting**: [Prettier](https://prettier.io/)
-- **Git Hooks**: [Husky](https://typicode.github.io/husky/) + [lint-staged](https://github.com/okonet/lint-staged)
+- **Security**: [Helmet](https://helmetjs.github.io/) + [Throttler](https://github.com/nestjs/throttler) (Rate Limiting)
+- **Env Control**: Zod-validated Environment Variables (Fail-Fast)
+- **Documentation**: [Swagger/OpenAPI](https://swagger.io/) with Zod Integration
+- **Formatting**: Prettier + ESLint 9 (Flat Config)
+- **Git Hooks**: Husky + lint-staged
 
 ---
 
@@ -25,24 +27,29 @@ Welcome to the **Fullstack Challenge** monorepo. This project is built with a mo
 ```text
 .
 ├── apps/
-│   ├── api/            # NestJS API (ESM, NodeNext)
-│   └── web/            # Next.js Application (App Router, Tailwind 4)
+│   ├── api/            # NestJS API (Pure Zod, Modular, Versioned, rate-limited)
+│   └── web/            # Next.js Application
 ├── packages/
-│   ├── eslint-config/  # Shared ESLint configurations (Flat Config)
-│   ├── typescript-config/ # Shared TypeScript configurations
-│   └── prettier-config/ # Shared Prettier configuration
-├── package.json        # Root workspace configuration
-└── turbo.json          # Turborepo task orchestration
+│   ├── validators/     # Shared Zod Schemas (Fullstack Contract)
+│   ├── eslint-config/  # Shared Linting
+│   ├── typescript-config/ # Shared TS Configs
+│   └── prettier-config/ # Shared Prettier
 ```
 
 ---
 
+## 🛡️ Best Practices Implemented
+
+- **Shared Contracts**: Zod schemas are defined in `@repo/validators` and shared between API and Web to ensure 100% type synchronization.
+- **Fail-Fast Configuration**: The API validates `process.env` at startup using Zod. It refuses to start if critical variables are missing or invalid.
+- **Production Protection**: Integrated global **Rate Limiting** to protect endpoints from brute-force and DoS attacks.
+- **Observability**: A global **Logging Interceptor** tracks the Method, Path, Status, and **Execution Time (ms)** for every request.
+- **Standardized Responses**: Unified Success Interceptor and Global Exception Filter for a consistent JSON contract.
+- **API Versioning**: Enforced URI versioning (e.g., `/api/v1`) for future-proof clients.
+
+---
+
 ## 🛠️ Getting Started
-
-### Prerequisites
-
-- **Node.js**: [LTS version recommended]
-- **PNPM**: `npm install -g pnpm`
 
 ### Installation
 
@@ -52,34 +59,12 @@ pnpm install
 
 ### Development
 
-Run all applications and packages in development mode:
-
 ```bash
 pnpm dev
 ```
 
-### Quality Checks
-
-Run linting and type-checking across the entire workspace:
-
-```bash
-pnpm lint
-pnpm type-check
-```
-
 ### Build
-
-Generate production builds for all applications:
 
 ```bash
 pnpm build
 ```
-
----
-
-## 🛡️ Best Practices Implemented
-
-- **ESM-First**: The API is configured as a pure ES Module for modern Node.js compatibility.
-- **Shared Configs**: Consistent coding standards across the monorepo via shared `@repo/` packages.
-- **Validation**: Automatic request validation in the API using `class-validator` and `ValidationPipe`.
-- **Performance**: Optimized builds with Turborepo caching and Next.js 15 features.

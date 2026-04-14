@@ -1,36 +1,46 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Fullstack Challenge Web (Next.js)
 
-## Getting Started
+The modern, high-performance frontend for the Fullstack Challenge project, built with Next.js 15 and Tailwind CSS 4.
 
-First, run the development server:
+## 🚀 Key Features
+
+- **Next.js 15 (App Router)**: Leveraging the latest features for server-side rendering and performance.
+- **Tailwind CSS 4.0**: Modern, CSS-first utility styling.
+- **Fullstack Type Safety**: Directly imports Zod schemas and TypeScript types from `@repo/validators`.
+- **Shared Contracts**: Ensures the frontend validation is always in perfect sync with the `@api/v1` backend.
+
+## 🏗️ Architecture
+
+As part of the **Senior-Level Monorepo Architecture**, this web application:
+
+1.  **Consumes Shared Schemas**: Form validation is driven by the schemas in `packages/validators`.
+2.  **Modular Logic**: Future features will be organized into domain-specific components that match the backend's modular structure.
+
+## 🛠️ Development
+
+### Setup
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Run
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+pnpm dev --filter web
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Build
 
-## Learn More
+```bash
+pnpm build --filter web
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 📐 Integration Examples
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+To use a shared validator in a form:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```typescript
+import { CreateExampleSchema } from '@repo/validators';
+// Use with react-hook-form and @hookform/resolvers/zod!
+```
