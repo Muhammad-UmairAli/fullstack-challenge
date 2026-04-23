@@ -1,65 +1,42 @@
-import Image from 'next/image';
-
 export default function Home() {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex w-full max-w-3xl flex-1 flex-col items-center justify-between bg-white px-16 py-32 sm:items-start dark:bg-black">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl leading-10 font-semibold tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <div className="flex min-h-screen flex-col items-center justify-center bg-black text-white selection:bg-indigo-500/30">
+      <div className="relative flex flex-col items-center justify-center px-6">
+        {/* Ambient Glow Effect */}
+        <div className="absolute top-1/2 left-1/2 -z-10 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 animate-pulse rounded-full bg-indigo-500/20 blur-[100px] duration-3000" />
+
+        <div className="flex flex-col items-center space-y-8 text-center transition-all">
+          {/* Badge */}
+          <div className="rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-sm font-medium tracking-wide text-indigo-300 backdrop-blur-md">
+            🚀 Development in Progress
+          </div>
+
+          {/* Heading */}
+          <h1 className="bg-linear-to-br from-white to-zinc-500 bg-clip-text text-5xl font-extrabold tracking-tight text-transparent sm:text-7xl">
+            Building Something <br />
+            <span className="bg-linear-to-r from-indigo-400 to-cyan-400 bg-clip-text text-transparent">
+              Incredible
+            </span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{' '}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{' '}
-            or the{' '}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{' '}
-            center.
+
+          {/* Subheading */}
+          <p className="max-w-xl text-lg leading-relaxed text-zinc-400 sm:text-xl">
+            We are actively forging the next iteration of the platform. Powered
+            by a decoupled, type-safe architecture. The foundation is set.
           </p>
+
+          {/* Status Indicator */}
+          <div className="group mt-4 flex cursor-default items-center space-x-3 rounded-xl border border-white/10 bg-white/5 px-6 py-4 backdrop-blur-md transition-all hover:scale-105 hover:bg-white/10 hover:shadow-xl hover:shadow-indigo-500/10">
+            <span className="relative flex h-3 w-3">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+              <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-500"></span>
+            </span>
+            <span className="text-sm font-medium text-zinc-300 transition-colors group-hover:text-white">
+              Core Systems Online & Routing Active
+            </span>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="bg-foreground text-background flex h-12 w-full items-center justify-center gap-2 rounded-full px-5 transition-colors hover:bg-[#383838] md:w-[158px] dark:hover:bg-[#ccc]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] md:w-[158px] dark:border-white/[.145] dark:hover:bg-[#1a1a1a]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+      </div>
     </div>
   );
 }
