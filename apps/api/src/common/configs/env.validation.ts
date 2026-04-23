@@ -16,6 +16,7 @@ export const envSchema = z.object({
     .default('3001')
     .transform((val) => parseInt(val, 10)),
   FRONTEND_URL: z.string().url().default('http://localhost:3000'),
+  DATABASE_URL: z.string().url(),
 });
 
 export type Env = z.infer<typeof envSchema>;

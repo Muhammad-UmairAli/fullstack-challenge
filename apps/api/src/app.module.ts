@@ -7,6 +7,7 @@ import { AppService } from './app.service.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { ProjectsModule } from './modules/projects/projects.module.js';
 import { validate } from './common/configs/env.validation.js';
+import { DatabaseModule } from './database/database.module.js';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { validate } from './common/configs/env.validation.js';
 
     AuthModule,
     ProjectsModule,
+    DatabaseModule.forRootAsync(),
   ],
   controllers: [AppController],
   providers: [
