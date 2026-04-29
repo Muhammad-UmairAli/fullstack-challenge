@@ -38,6 +38,7 @@ async function bootstrap() {
     type: VersioningType.URI,
     defaultVersion: '1',
   });
+  app.setGlobalPrefix('api');
 
   /**
    * 4. 📖 DOCUMENTATION: Swagger Integration
@@ -54,8 +55,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   cleanupOpenApiDoc(document);
   SwaggerModule.setup('api/docs', app, document);
-
-  app.setGlobalPrefix('api');
 
   /**
    * 5. ✅ GLOBAL PIPES, FILTERS & INTERCEPTORS
