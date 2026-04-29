@@ -68,3 +68,4 @@ logs
 !.vscode/extensions.json
 .idea
 .vercel
+.cursor/*

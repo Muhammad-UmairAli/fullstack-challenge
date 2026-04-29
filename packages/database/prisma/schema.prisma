@@ -23,6 +23,7 @@ model User {
   updatedAt DateTime @updatedAt
 
   refreshTokens RefreshToken[]
+  projects      Project[]
 }
 
 model RefreshToken {
@@ -33,5 +34,19 @@ model RefreshToken {
   isRevoked Boolean  @default(false)
   expiresAt DateTime
   createdAt DateTime @default(now())
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  imageUrl    String?
+  techStack   String[]
+  liveUrl     String?
+  githubUrl   String?
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
