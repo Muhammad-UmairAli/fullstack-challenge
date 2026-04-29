@@ -17,15 +17,17 @@ By leveraging **pnpm workspaces** and **Turborepo**, we achieve lightning-fast b
 
 ### Backend (NestJS 11)
 
-- **Strict IoC Dependency Injection**: Database connections are managed via isolated Dynamic Modules (`forRootAsync`), strictly avoiding tight coupling and `@Global()` anti-patterns.
+- **Authentication Ready**: JWT access/refresh flow with argon2 password hashing, refresh-token persistence, and route-level throttling.
 - **Fail-Fast Environment Validation**: Powered by `Zod`, the API refuses to boot if critical `.env` variables are missing or misconfigured.
 - **Production Defenses**: Global Rate Limiting (`@nestjs/throttler`) and HTTP Headers protection (`Helmet`) are enabled by default.
-- **Global Observability**: Custom interceptors track precise execution times and normalize all API responses into a predictable JSON envelope.
+- **Global Observability**: Custom interceptors track execution times and normalize successful API responses into a predictable JSON envelope.
 
 ### Frontend (Next.js 15)
 
 - **React 19 & App Router**: Utilizing the absolute latest React paradigms.
 - **Tailwind CSS 4.0**: Styled with the latest iteration of Tailwind, fully integrated into the Prettier formatting pipeline.
+- **BFF Auth Pattern**: Server Actions manage HttpOnly tokens, middleware protects routes, and refresh flow is handled transparently.
+- **Theme System**: Persistent dark/light mode with portfolio-focused typography and reusable design tokens.
 
 ### Persistence (Prisma & PostgreSQL)
 
@@ -86,7 +88,28 @@ Push the schema to the database to generate the tables and the Prisma Client:
 pnpm --filter @repo/database db:push
 ```
 
-### 4. Running the Project
+### 4. Configure Environment Files
+
+Create env files from examples:
+
+```bash
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env
+```
+
+Set required values:
+
+- `apps/api/.env`
+  - `DATABASE_URL`
+  - `JWT_ACCESS_SECRET` (recommended: `openssl rand -base64 32`)
+  - `JWT_REFRESH_SECRET` (recommended: `openssl rand -base64 32`)
+  - `JWT_ACCESS_EXPIRATION` (default `15m`)
+  - `JWT_REFRESH_EXPIRATION` (default `7d`)
+- `apps/web/.env`
+  - `NEXT_PUBLIC_API_URL=http://localhost:3001/api/v1`
+  - `API_URL=http://localhost:3001/api/v1`
+
+### 5. Running the Project
 
 Boot up the entire monorepo concurrently (Frontend & Backend):
 
@@ -95,7 +118,7 @@ pnpm dev
 ```
 
 - **Frontend**: Navigate to `http://localhost:3000`
-- **Backend API**: Navigate to `http://localhost:3001`
+- **Backend API**: Navigate to `http://localhost:3001/api/v1`
 - **pgAdmin (DB Viewer)**: Navigate to `http://localhost:5050` _(admin@admin.com / admin)_
 
 ---
@@ -124,6 +147,17 @@ Local development requires specific environment variables. The system uses secur
 DATABASE_URL="postgresql://postgres:postgres@localhost:5433/fullstack_challenge?schema=public"
 PORT="3001"
 FRONTEND_URL="http://localhost:3000"
+JWT_ACCESS_SECRET="<generate-32-byte-secret>"
+JWT_REFRESH_SECRET="<generate-32-byte-secret>"
+JWT_ACCESS_EXPIRATION="15m"
+JWT_REFRESH_EXPIRATION="7d"
+```
+
+**`apps/web/.env`** _(Required for the Next.js web app)_
+
+```env
+NEXT_PUBLIC_API_URL="http://localhost:3001/api/v1"
+API_URL="http://localhost:3001/api/v1"
 ```
 
 **`packages/database/.env`** _(Required for Prisma CLI commands)_
@@ -142,5 +176,11 @@ DATABASE_URL="postgresql://postgres:postgres@localhost:5433/fullstack_challenge?
    - Your new types are instantly available in the API!
 2. **Creating an API Endpoint**:
    - Generate a module in `apps/api/src/modules/`.
-   - Explicitly import `DatabaseModule` if you need database access.
+   - Inject `PrismaService` in your services/modules where needed.
    - Inject `PrismaService` into your controllers/services.
+3. **Auth Endpoints**:
+   - Register: `POST /api/v1/auth/register`
+   - Login: `POST /api/v1/auth/login`
+   - Refresh: `POST /api/v1/auth/refresh`
+   - Me: `GET /api/v1/auth/me`
+   - Logout: `POST /api/v1/auth/logout`

@@ -15,3 +15,4 @@ export const CreateExampleSchema = z.object({
 
 // We can also export the TypeScript type inferred from the schema
 export type CreateExampleInput = z.infer<typeof CreateExampleSchema>;
+export * from './auth.schema.js';

@@ -6,16 +6,19 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { cleanupOpenApiDoc, ZodValidationPipe } from 'nestjs-zod';
 import { ConfigService } from '@nestjs/config';
 import { GlobalExceptionFilter } from './common/filters/http-exception.filter.js';
+import { ZodExceptionFilter } from './common/filters/zod-exception.filter.js';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor.js';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   /**
-   * 1. 🛡️ SECURITY: Helmet Configuration
+   * 1. 🛡️ SECURITY: Middleware
    */
   app.use(helmet());
+  app.use(cookieParser());
 
   /**
    * 2. 🌐 CORS: Professional Config
@@ -58,7 +61,7 @@ async function bootstrap() {
    * 5. ✅ GLOBAL PIPES, FILTERS & INTERCEPTORS
    */
   app.useGlobalPipes(new ZodValidationPipe());
-  app.useGlobalFilters(new GlobalExceptionFilter());
+  app.useGlobalFilters(new GlobalExceptionFilter(), new ZodExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
   app.useGlobalInterceptors(new LoggingInterceptor());
 

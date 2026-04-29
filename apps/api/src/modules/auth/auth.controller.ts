@@ -1,21 +1,77 @@
-import { Controller, Post } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  UnauthorizedException,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
+import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
+import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service.js';
+import type { RegisterInput, LoginInput } from '@repo/validators';
+import type { Request } from 'express';
 
-@ApiTags('Authentication')
 @Controller('auth')
+@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('login')
-  @ApiOperation({ summary: 'Login to the application' })
-  login() {
-    return this.authService.login();
+  /**
+   * 📝 POST /auth/register
+   * Strict rate limiting: Max 3 attempts per minute per IP.
+   */
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Post('register')
+  async register(@Body() data: RegisterInput) {
+    return this.authService.register(data);
   }
 
-  @Post('signup')
-  @ApiOperation({ summary: 'Register a new account' })
-  signup() {
-    return this.authService.signup();
+  /**
+   * 🔑 POST /auth/login
+   * Strict rate limiting: Max 5 attempts per minute per IP.
+   */
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() data: LoginInput) {
+    const tokens = await this.authService.login(data);
+    return tokens; // Returns { accessToken, refreshToken }
+  }
+
+  /**
+   * 🔄 POST /auth/refresh
+   */
+  @Post('refresh')
+  @HttpCode(HttpStatus.OK)
+  async refresh(@Body() data: { refreshToken: string }) {
+    if (!data.refreshToken)
+      throw new UnauthorizedException('Refresh token missing');
+
+    const payload = await this.authService.verifyRefreshToken(
+      data.refreshToken,
+    );
+    return this.authService.refreshTokens(payload.sub, data.refreshToken);
+  }
+
+  /**
+   * 👤 GET /auth/me
+   */
+  @Get('me')
+  @UseGuards(AuthGuard('jwt'))
+  getMe(@Req() req: Request & { user: unknown }) {
+    return req.user;
+  }
+
+  /**
+   * 🚪 POST /auth/logout
+   */
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
+  async logout(@Body() data: { refreshToken?: string }) {
+    return this.authService.logout(data.refreshToken);
   }
 }

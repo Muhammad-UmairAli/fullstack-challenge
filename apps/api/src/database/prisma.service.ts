@@ -4,7 +4,7 @@ import {
   type OnModuleDestroy,
   Logger,
 } from '@nestjs/common';
-import { PrismaClient } from '@repo/database';
+import { PrismaClient, securityExtension } from '@repo/database';
 
 @Injectable()
 export class PrismaService
@@ -12,6 +12,13 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger(PrismaService.name);
+
+  /**
+   * 🔐 MARKET STANDARD: Extended Client
+   * We apply the security extension here. In our services, we will
+   * use this 'client' property to perform secure queries.
+   */
+  public readonly client = this.$extends(securityExtension);
 
   constructor() {
     super();

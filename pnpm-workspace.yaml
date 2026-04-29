@@ -1,3 +1,10 @@
 packages:
   - "apps/*"
   - "packages/*"
+
+catalog:
+  zod: "^3.24.2"
+
+allowBuilds:
+  argon2: true
+
