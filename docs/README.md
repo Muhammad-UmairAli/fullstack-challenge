@@ -10,6 +10,8 @@ This directory contains detailed technical documentation for the **Fullstack Ent
   - App Router, Server Actions, BFF Auth, and UI System.
 - [**Authentication Implementation Review**](./auth-implementation-review.md)
   - Deep dive into the security architecture and end-to-end auth flows.
+- [**Design System & Theming**](./design-system.md)
+  - Detailed specs for the premium Portfolio Design System.
 
 ## 🚀 Quick Links
 

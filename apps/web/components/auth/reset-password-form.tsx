@@ -99,6 +99,10 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         <Button
           className="bg-primary w-full"
           onClick={() => router.push('/login')}
+          style={{
+            backgroundColor: 'var(--accent)',
+            color: 'var(--bg-primary)',
+          }}
         >
           Go to Login Now
         </Button>
@@ -129,7 +133,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="text-theme-faint transition-colors hover:text-blue-500"
+                className="text-theme-faint hover-text-accent transition-colors"
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -179,7 +183,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
               <button
                 type="button"
                 onClick={() => setShowConfirmPassword((prev) => !prev)}
-                className="text-theme-faint transition-colors hover:text-blue-500"
+                className="text-theme-faint hover-text-accent transition-colors"
               >
                 {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -196,7 +200,7 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
         <Button
           type="submit"
           disabled={isLoading}
-          className="bg-primary hover:bg-brand-600 shadow-primary/20 h-11 font-semibold text-white shadow-lg transition-all duration-300 active:scale-95"
+          className="h-11 font-semibold text-white shadow-lg transition-all duration-300 active:scale-95"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">

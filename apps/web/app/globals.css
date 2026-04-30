@@ -1,91 +1,244 @@
 @import 'tailwindcss';
 
 /**
- * 🎨 THEME: Dark Mode Config
- * Design system tokens for deep contrast, glassmorphism, and electric accents.
+ * 🎨 THEME: Premium Portfolio Design System
+ *
+ * A dual-mode design system (Light + Dark) built for a software developer
+ * portfolio. Implements WCAG AA accessibility, glassmorphism effects,
+ * smooth 0.3s transitions, and a tech-inspired visual language.
+ *
+ * Toggle: class-based via `.theme-dark` / `.theme-light` on <html>.
+ * Fonts:  Inter (body), Space Grotesk (display), JetBrains Mono (code).
  */
+
+/* ─────────────────────────────────────────────────────────
+   1. TAILWIND THEME EXTENSION
+   ───────────────────────────────────────────────────────── */
 @theme {
-  /* Minimal Dark Portfolio Palette */
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
+  --color-brand-blue: #3b82f6;
+  --color-brand-blue-hover: #1d4ed8;
+  --color-brand-green: #22c55e;
+  --color-brand-green-hover: #16a34a;
 
-  --color-surface-980: #090b10;
-  --color-surface-950: #0f1117;
-  --color-surface-900: #171a21;
-  --color-surface-850: #1f2430;
-
-  /* Semantic Tokens */
-  --color-background: var(--color-surface-980);
-  --color-foreground: #f5f7fb;
-  --color-primary: var(--color-brand-500);
-  --color-secondary: #8b5cf6;
+  --color-slate-50: #f8fafc;
+  --color-slate-100: #f1f5f9;
+  --color-slate-200: #e2e8f0;
+  --color-slate-700: #334155;
+  --color-slate-800: #1e293b;
+  --color-slate-900: #0f172a;
+  --color-slate-950: #020617;
 }
 
+/* ─────────────────────────────────────────────────────────
+   2. CSS CUSTOM PROPERTIES (Light = default, Dark = override)
+   ───────────────────────────────────────────────────────── */
 :root {
-  --background: #090b10;
-  --foreground: #f5f7fb;
-  --surface-card: rgba(15, 17, 23, 0.78);
-  --surface-elevated: rgba(13, 17, 26, 0.9);
-  --border-color: rgba(255, 255, 255, 0.1);
-  --text-primary: #f5f7fb;
-  --text-muted: #b7c0d1;
-  --text-faint: #8d96a9;
+  /* Light Mode (Clean, professional daytime look) */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --text-faint: #94a3b8;
+  --accent: #3b82f6;
+  --accent-hover: #1d4ed8;
+  --border-color: #e2e8f0;
+  --card-bg: #ffffff;
+  --surface-card: rgba(255, 255, 255, 0.92);
+  --surface-elevated: rgba(255, 255, 255, 0.98);
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --glow: transparent;
+
+  /* Gradients */
+  --gradient-bg: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  --gradient-accent: linear-gradient(135deg, #3b82f6, #6366f1);
 }
 
 html.theme-dark {
-  --background: #090b10;
-  --foreground: #f5f7fb;
+  /* Dark Mode (Sleek, immersive night mode) */
+  --bg-primary: #0f0f23;
+  --bg-secondary: #1e1e2e;
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --text-faint: #8d96a9;
+  --accent: #22c55e;
+  --accent-hover: #16a34a;
+  --border-color: #27272a;
+  --card-bg: rgba(255, 255, 255, 0.05);
   --surface-card: rgba(15, 17, 23, 0.78);
   --surface-elevated: rgba(13, 17, 26, 0.9);
-  --border-color: rgba(255, 255, 255, 0.1);
-  --text-primary: #f5f7fb;
-  --text-muted: #b7c0d1;
-  --text-faint: #8d96a9;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+  --glow: 0 0 20px rgba(34, 197, 94, 0.15);
+
+  /* Gradients */
+  --gradient-bg: linear-gradient(180deg, #0b0e14 0%, #0f0f23 100%);
+  --gradient-accent: linear-gradient(135deg, #22c55e, #10b981);
 }
 
-html.theme-light {
-  --background: #f5f7fb;
-  --foreground: #0f172a;
-  --surface-card: rgba(255, 255, 255, 0.92);
-  --surface-elevated: rgba(255, 255, 255, 0.98);
-  --border-color: rgba(15, 23, 42, 0.12);
-  --text-primary: #0f172a;
-  --text-muted: #475569;
-  --text-faint: #64748b;
-}
-
+/* ─────────────────────────────────────────────────────────
+   3. BASE STYLES
+   ───────────────────────────────────────────────────────── */
 body {
-  background: linear-gradient(180deg, #0b0e14 0%, #090b10 100%);
+  background: var(--gradient-bg);
   color: var(--text-primary);
   font-family:
     var(--font-inter),
     system-ui,
     -apple-system,
     sans-serif;
-  line-height: 1.55;
+  line-height: 1.6;
   letter-spacing: -0.01em;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition:
+    background 0.3s ease,
+    color 0.3s ease;
 }
 
-html.theme-light body {
-  background: linear-gradient(180deg, #ffffff 0%, #f5f7fb 100%);
+/* Themed scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-/**
- * ✨ GLASSMORPHISM: Utility classes for frosted glass effects
- */
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 999px;
+}
+
+/* Links: underline on hover only */
+a {
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+/* ─────────────────────────────────────────────────────────
+   4. TYPOGRAPHY CLASSES
+   ───────────────────────────────────────────────────────── */
+
+/* Display font (headings) */
+.font-display {
+  font-family:
+    var(--font-space-grotesk),
+    system-ui,
+    -apple-system,
+    sans-serif;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+/* Monospace font (code snippets) */
+.font-code {
+  font-family:
+    var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, monospace;
+}
+
+/* Overline / label style */
+.eyebrow {
+  font-size: 0.72rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Small body copy */
+.copy-sm {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* ─────────────────────────────────────────────────────────
+   5. SEMANTIC COLOR UTILITIES
+   ───────────────────────────────────────────────────────── */
+.text-theme-primary {
+  color: var(--text-primary);
+}
+.text-theme-muted {
+  color: var(--text-secondary);
+}
+.text-theme-faint {
+  color: var(--text-faint);
+}
+.text-muted {
+  color: var(--text-secondary);
+}
+.text-accent {
+  color: var(--accent);
+}
+
+.bg-theme-background {
+  background: var(--gradient-bg);
+}
+.bg-accent {
+  background-color: var(--accent);
+}
+.border-accent {
+  border-color: var(--accent);
+}
+
+/* Hover variants */
+.hover-text-accent {
+  transition: color 0.3s ease;
+}
+.hover-text-accent:hover {
+  color: var(--accent);
+}
+
+.hover-border-accent {
+  transition: border-color 0.3s ease;
+}
+.hover-border-accent:hover {
+  border-color: var(--accent);
+}
+
+/* ─────────────────────────────────────────────────────────
+   6. GLASSMORPHISM EFFECTS
+   ───────────────────────────────────────────────────────── */
+
+/* Standard glass panel */
 .glass {
   background: var(--surface-card);
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
 }
 
-html.theme-light .glass {
-  background: var(--surface-card);
+/* Interactive glass card with hover lift */
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
+  box-shadow: var(--shadow);
+  border-radius: 0.75rem;
+  transition: all 0.3s ease;
 }
 
+.glass-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: var(--accent);
+  box-shadow: var(--glow);
+}
+
+/* Subtle hover effect for inputs and small elements */
+.glass-hover {
+  transition: all 0.3s ease;
+}
+
+.glass-hover:hover {
+  border-color: var(--accent) !important;
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+/* ─────────────────────────────────────────────────────────
+   7. AUTH SHELL (Login / Register pages background)
+   ───────────────────────────────────────────────────────── */
 .auth-shell {
   position: relative;
   overflow: hidden;
@@ -97,67 +250,61 @@ html.theme-light .glass {
   inset: 0;
   pointer-events: none;
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    linear-gradient(
+      color-mix(in srgb, var(--text-primary) 2%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--text-primary) 2%, transparent) 1px,
+      transparent 1px
+    );
   background-size: 32px 32px;
   mask-image: radial-gradient(ellipse at center, black 45%, transparent 85%);
 }
 
-.glass-hover {
+/* ─────────────────────────────────────────────────────────
+   8. BUTTONS
+   ───────────────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 2rem;
+  border-radius: 0.75rem;
+  font-weight: 500;
+  font-size: 0.875rem;
+  background-color: var(--accent);
+  color: var(--bg-primary);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+  transform: scale(1.05);
+  box-shadow: var(--glow);
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+/* ─────────────────────────────────────────────────────────
+   9. STICKY NAVIGATION
+   ───────────────────────────────────────────────────────── */
+.nav-sticky {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background-color: var(--bg-primary);
+  border-bottom: 1px solid var(--border-color);
   transition: all 0.3s ease;
 }
 
-.glass-hover:hover {
-  background: rgba(20, 24, 34, 0.95);
-  border-color: rgba(59, 130, 246, 0.35);
-  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.12);
-}
-
-html.theme-light .glass-hover:hover {
-  background: rgba(255, 255, 255, 0.98);
-  border-color: rgba(59, 130, 246, 0.3);
-}
-
-.text-theme-primary {
-  color: var(--text-primary);
-}
-
-.text-theme-muted {
-  color: var(--text-muted);
-}
-
-.text-theme-faint {
-  color: var(--text-faint);
-}
-
-.bg-theme-background {
-  background: var(--background);
-}
-
-.font-display {
-  font-family:
-    var(--font-space-grotesk),
-    system-ui,
-    -apple-system,
-    sans-serif;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-
-.font-code {
-  font-family:
-    var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
-    Consolas, monospace;
-}
-
-.eyebrow {
-  font-size: 0.72rem;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  font-weight: 500;
-}
-
-.copy-sm {
-  font-size: 0.95rem;
-  line-height: 1.6;
+html.theme-dark .nav-sticky {
+  background-color: rgba(15, 15, 35, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }

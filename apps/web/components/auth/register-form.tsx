@@ -115,7 +115,7 @@ export function RegisterForm() {
             <button
               type="button"
               onClick={() => setShowPassword((prev) => !prev)}
-              className="text-theme-faint transition-colors hover:text-blue-500"
+              className="text-theme-faint hover-text-accent transition-colors"
               aria-label={showPassword ? 'Hide password' : 'Show password'}
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -137,7 +137,7 @@ export function RegisterForm() {
             <button
               type="button"
               onClick={() => setShowConfirmPassword((prev) => !prev)}
-              className="text-theme-faint transition-colors hover:text-blue-500"
+              className="text-theme-faint hover-text-accent transition-colors"
               aria-label={
                 showConfirmPassword
                   ? 'Hide confirm password'
@@ -188,7 +188,7 @@ export function RegisterForm() {
         <Button
           type="submit"
           disabled={isLoading}
-          className="bg-primary hover:bg-brand-600 shadow-primary/20 mt-4 h-11 font-semibold text-white shadow-lg transition-all active:scale-95"
+          className="mt-4 h-11 font-semibold text-white shadow-lg transition-all active:scale-95"
         >
           {isLoading ? 'Creating Account...' : 'Create Account'}
         </Button>

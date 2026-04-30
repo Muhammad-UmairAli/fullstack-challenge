@@ -85,7 +85,8 @@ export function LoginForm() {
             </label>
             <Link
               href="/forgot-password"
-              className="text-primary text-xs leading-5 hover:underline"
+              className="text-xs leading-5 hover:underline"
+              style={{ color: 'var(--accent)' }}
             >
               Forgot?
             </Link>
@@ -100,7 +101,7 @@ export function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword((prev) => !prev)}
-                className="text-theme-faint transition-colors hover:text-blue-500"
+                className="text-theme-faint hover-text-accent transition-colors"
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -114,10 +115,10 @@ export function LoginForm() {
             type="checkbox"
             checked={rememberMe}
             onChange={(event) => setRememberMe(event.target.checked)}
-            className="h-4 w-4 rounded border accent-blue-500"
+            className="h-4 w-4 rounded border"
             style={{
               borderColor: 'var(--border-color)',
-              background: 'var(--surface-elevated)',
+              accentColor: 'var(--accent)',
             }}
           />
           Keep me signed in on this device
@@ -132,7 +133,7 @@ export function LoginForm() {
         <Button
           type="submit"
           disabled={isLoading}
-          className="bg-primary hover:bg-brand-600 shadow-primary/20 h-11 font-semibold text-white shadow-lg transition-all duration-300 active:scale-95"
+          className="h-11 font-semibold text-white shadow-lg transition-all duration-300 active:scale-95"
         >
           {isLoading ? (
             <span className="flex items-center gap-2">

@@ -17,13 +17,29 @@ export default function ForgotPasswordPage() {
       </div>
 
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <div className="bg-primary/15 absolute -top-[10%] -left-[10%] h-[40%] w-[40%] rounded-full blur-[120px]" />
-        <div className="bg-primary/10 absolute -right-[10%] -bottom-[10%] h-[40%] w-[40%] rounded-full blur-[120px]" />
+        <div
+          className="absolute -top-[10%] -left-[10%] h-[40%] w-[40%] rounded-full blur-[120px]"
+          style={{
+            background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
+          }}
+        />
+        <div
+          className="absolute -right-[10%] -bottom-[10%] h-[40%] w-[40%] rounded-full blur-[120px]"
+          style={{
+            background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
+          }}
+        />
       </div>
 
       <div className="relative z-10 w-full max-w-[416px] space-y-10">
         <div className="flex flex-col items-center space-y-3 text-center">
-          <div className="mb-1 h-12 w-12 rounded-xl bg-linear-to-br from-purple-500 to-pink-500 p-2.5 shadow-lg shadow-purple-500/20">
+          <div
+            className="mb-1 h-12 w-12 rounded-xl p-2.5 shadow-lg"
+            style={{
+              background: 'var(--gradient-accent)',
+              boxShadow: 'var(--glow)',
+            }}
+          >
             <svg
               className="text-white"
               fill="none"
@@ -52,7 +68,7 @@ export default function ForgotPasswordPage() {
         <div className="text-theme-faint copy-sm pt-2 text-center">
           <Link
             href="/login"
-            className="text-theme-muted inline-flex items-center gap-2 transition-colors hover:text-white"
+            className="text-theme-muted hover-text-accent inline-flex items-center gap-2 transition-colors"
           >
             <ChevronLeft size={16} />
             Back to login
