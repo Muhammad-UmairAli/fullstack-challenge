@@ -11,7 +11,7 @@ The modern, high-performance frontend for the Fullstack Challenge project, built
 
 ## 🏗️ Architecture
 
-As part of the **Senior-Level Monorepo Architecture**, this web application:
+As part of the Monorepo Architecture, this web application:
 
 1.  **Consumes Shared Schemas**: Form validation is driven by the schemas in `packages/validators`.
 2.  **Modular Logic**: Future features will be organized into domain-specific components that match the backend's modular structure.

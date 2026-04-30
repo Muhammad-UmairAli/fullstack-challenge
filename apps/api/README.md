@@ -1,13 +1,13 @@
 # Fullstack Challenge API (NestJS)
 
-A professional-grade NestJS application built with modern standards for security, validation, and observability.
+A NestJS application built with modern standards for security, validation, and observability.
 
 ## 🏗️ Architecture
 
 ### 1. 📋 Configuration & Validation
 
 - **Zod Env Validation**: App fails immediately if `process.env` is missing critical values (`PORT`, `FRONTEND_URL`, etc.).
-- **Pure Zod**: Leveraging `nestjs-zod` for zero-overhead validation across all endpoints.
+- **Zod-based Validation**: Leveraging `nestjs-zod` for consistent validation across all endpoints.
 
 ### 2. 🛡️ Security & Protection
 

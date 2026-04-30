@@ -14,9 +14,8 @@ export class PrismaService
   private readonly logger = new Logger(PrismaService.name);
 
   /**
-   * 🔐 MARKET STANDARD: Extended Client
-   * We apply the security extension here. In our services, we will
-   * use this 'client' property to perform secure queries.
+   * 🔐 Security Extension
+   * Applies the shared security extension for query filtering and safety.
    */
   public readonly client = this.$extends(securityExtension);
 

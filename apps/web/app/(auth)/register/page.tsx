@@ -50,7 +50,7 @@ export default function RegisterPage() {
             Create Account
           </h1>
           <p className="copy-sm text-theme-muted">
-            Launch your developer portfolio with a premium experience.
+            Launch your developer portfolio with a modern experience.
           </p>
         </div>
 

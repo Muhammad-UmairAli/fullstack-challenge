@@ -1,9 +1,8 @@
 @import 'tailwindcss';
 
 /**
- * 🎨 THEME: Midnight Premium
- * Market-standard design system for high-end portfolios.
- * Focused on deep contrast, glassmorphism, and electric accents.
+ * 🎨 THEME: Dark Mode Config
+ * Design system tokens for deep contrast, glassmorphism, and electric accents.
  */
 @theme {
   /* Minimal Dark Portfolio Palette */
@@ -74,7 +73,7 @@ html.theme-light body {
 }
 
 /**
- * ✨ GLASSMORPHISM: Utility classes for premium surfaces
+ * ✨ GLASSMORPHISM: Utility classes for frosted glass effects
  */
 .glass {
   background: var(--surface-card);

@@ -21,7 +21,7 @@ async function bootstrap() {
   app.use(cookieParser());
 
   /**
-   * 2. 🌐 CORS: Professional Config
+   * 2. 🌐 CORS: Configuration
    */
   const configService = app.get(ConfigService);
   const frontendUrl = configService.get<string>('FRONTEND_URL');
@@ -32,7 +32,7 @@ async function bootstrap() {
   });
 
   /**
-   * 3. 🚀 VERSIONING: Senior Practice
+   * 3. 🚀 VERSIONING: API Versioning
    */
   app.enableVersioning({
     type: VersioningType.URI,

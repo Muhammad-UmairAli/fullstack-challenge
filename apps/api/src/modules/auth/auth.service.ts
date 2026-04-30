@@ -116,8 +116,8 @@ export class AuthService {
       },
     });
 
-    // 📩 MARKET STANDARD: In a real app, send email here.
-    // For this challenge, we log it so we can use it in the UI.
+    // Simulation: In a production environment, an email would be sent here.
+    // For development, we log the reset URL to the console.
     const resetUrl = `${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/reset-password?token=${token}`;
 
     this.logger.log('--- PASSWORD RESET SIMULATION ---');

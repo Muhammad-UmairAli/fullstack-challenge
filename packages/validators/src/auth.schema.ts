@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 /**
- * 🛡️ MARKET STANDARD: Strong Password Policies
- * We enforce uppercase, lowercase, and numbers at the schema level.
+ * 🛡️ AUTH SCHEMAS
+ * Defines password complexity and field validation.
  */
 export const RegisterSchema = z.object({
   email: z.string().email('Invalid email address'),

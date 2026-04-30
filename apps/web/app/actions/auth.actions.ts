@@ -15,14 +15,20 @@ import type {
  * and HttpOnly cookies away from the client-side XSS risks.
  */
 
-export async function loginAction(data: LoginInput) {
+export type ActionResponse = {
+  success: boolean;
+  message?: string;
+  errors?: Record<string, string>;
+};
+
+export async function loginAction(data: LoginInput): Promise<ActionResponse> {
   const result = await api.auth.login(data);
 
   if (result.success && result.data) {
     const cookieStore = await cookies();
 
-    // 🛡️ MARKET STANDARD: BFF (Backend-For-Frontend) Cookie Management
-    // Next.js explicitly controls the session by setting both tokens.
+    // BFF (Backend-For-Frontend) Cookie Management
+    // Set HttpOnly cookies for session management.
 
     // 1. Short-lived Access Token (e.g., 15m)
     cookieStore.set('access_token', result.data.accessToken, {
@@ -50,16 +56,18 @@ export async function loginAction(data: LoginInput) {
   return {
     success: false,
     message: result.message,
-    ...(result.errors ? { errors: result.errors } : {}),
+    errors: result.errors,
   };
 }
 
-export async function registerAction(data: RegisterInput) {
+export async function registerAction(
+  data: RegisterInput,
+): Promise<ActionResponse> {
   const result = await api.auth.register(data);
   return result;
 }
 
-export async function logoutAction() {
+export async function logoutAction(): Promise<ActionResponse> {
   const cookieStore = await cookies();
   const refreshToken = cookieStore.get('refresh_token')?.value;
 
@@ -69,12 +77,16 @@ export async function logoutAction() {
   return { success: true };
 }
 
-export async function forgotPasswordAction(data: ForgotPasswordInput) {
+export async function forgotPasswordAction(
+  data: ForgotPasswordInput,
+): Promise<ActionResponse> {
   const result = await api.auth.forgotPassword(data);
   return result;
 }
 
-export async function resetPasswordAction(data: ResetPasswordInput) {
+export async function resetPasswordAction(
+  data: ResetPasswordInput,
+): Promise<ActionResponse> {
   const result = await api.auth.resetPassword(data);
   return result;
 }

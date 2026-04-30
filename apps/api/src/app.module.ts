@@ -12,7 +12,7 @@ import { DatabaseModule } from './database/database.module.js';
 @Module({
   imports: [
     /**
-     * 💡 SENIOR-LEVEL: Environment Management
+     * 💡 ConfigModule: Environment Management
      * isGlobal: true ensures we don't need to import it in every module.
      * validate: uses our Zod schema for startup validation.
      */
@@ -22,7 +22,7 @@ import { DatabaseModule } from './database/database.module.js';
     }),
 
     /**
-     * 💡 SENIOR-LEVEL: Rate Limiting
+     * 💡 ThrottlerModule: Rate Limiting
      * Protects the API from brute-force and DoS attacks.
      * Default: 10 requests every 60 seconds per IP.
      */

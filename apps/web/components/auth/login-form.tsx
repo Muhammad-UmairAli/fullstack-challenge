@@ -14,8 +14,8 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 
 /**
- * ✨ PREMIUM LOGIN FORM
- * Refactored to use Next.js 15 Server Actions and the Midnight Premium theme.
+ * ✨ USER LOGIN
+ * Authentication form using Next.js Server Actions.
  */
 export function LoginForm() {
   const [isLoading, setIsLoading] = React.useState(false);

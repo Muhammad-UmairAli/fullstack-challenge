@@ -13,8 +13,8 @@ import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 
 /**
- * ✨ PREMIUM REGISTER FORM
- * High-end onboarding experience with real-time validation and server-side safety.
+ * ✨ USER REGISTRATION
+ * Form for creating a new account with real-time validation.
  */
 export function RegisterForm() {
   const [isLoading, setIsLoading] = React.useState(false);
@@ -190,7 +190,7 @@ export function RegisterForm() {
           disabled={isLoading}
           className="bg-primary hover:bg-brand-600 shadow-primary/20 mt-4 h-11 font-semibold text-white shadow-lg transition-all active:scale-95"
         >
-          {isLoading ? 'Creating Account...' : 'Join the Elite'}
+          {isLoading ? 'Creating Account...' : 'Create Account'}
         </Button>
       </form>
     </motion.div>

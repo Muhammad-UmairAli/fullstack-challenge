@@ -22,7 +22,7 @@ const jetBrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: 'Portfolio OS',
-  description: 'A premium portfolio platform for modern builders.',
+  description: 'A portfolio platform for modern builders.',
 };
 
 export default async function RootLayout({

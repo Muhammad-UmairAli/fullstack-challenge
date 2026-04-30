@@ -87,8 +87,8 @@ export default function Home() {
             Build. Showcase. Grow.
           </h2>
           <p className="copy-sm text-theme-muted mt-6 max-w-2xl">
-            Your authentication flow and premium UI are now connected. Next, add
-            projects, case studies, and social proof modules to launch a
+            Your authentication flow and UI components are now connected. Next,
+            add projects, case studies, and social proof modules to launch a
             portfolio that stands out.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">

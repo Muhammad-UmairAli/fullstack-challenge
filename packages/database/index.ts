@@ -5,8 +5,7 @@ export * from '@prisma/client';
 export * from './src/extensions/security.extension.js';
 
 /**
- * 💡 MARKET STANDARD: Extended Client
- * This client includes our security extensions by default.
+ * Shared Prisma Client with Security Extensions
  */
 export const prisma = new PrismaClient().$extends(securityExtension);
 
