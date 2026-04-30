@@ -12,12 +12,24 @@ import { useEffect, useState, useMemo } from 'react';
 // ═══════════════════════════════════════════
 
 const fastFade: Variants = {
-  initial: { opacity: 0 },
+  initial: { opacity: 0, filter: 'blur(10px)', scale: 1.05 },
   animate: {
     opacity: 1,
-    transition: { duration: 0.3, ease: 'easeOut' as const },
+    filter: 'blur(0px)',
+    scale: 1,
+    transition: { duration: 0.8, ease: 'easeOut' as const },
   },
 };
+
+const MouseSpotlight = ({ x, y }: { x: number; y: number }) => (
+  <motion.div
+    className="pointer-events-none fixed inset-0 -z-10"
+    animate={{
+      background: `radial-gradient(600px circle at ${x}px ${y}px, color-mix(in srgb, var(--accent) 6%, transparent), transparent)`,
+    }}
+    transition={{ type: 'spring', damping: 30, stiffness: 150 }}
+  />
+);
 
 const StarLayer = ({
   size,
@@ -27,6 +39,7 @@ const StarLayer = ({
   mouseX,
   mouseY,
   parallaxFactor,
+  isLaunching,
 }: {
   size: number;
   opacity: number;
@@ -35,6 +48,7 @@ const StarLayer = ({
   mouseX: number;
   mouseY: number;
   parallaxFactor: number;
+  isLaunching: boolean;
 }) => {
   const [stars, setStars] = useState('');
 
@@ -52,7 +66,11 @@ const StarLayer = ({
   return (
     <motion.div
       animate={{ y: [-2000, 0] }}
-      transition={{ duration: speed, repeat: Infinity, ease: 'linear' }}
+      transition={{
+        duration: isLaunching ? speed * 0.2 : speed,
+        repeat: Infinity,
+        ease: 'linear',
+      }}
       className="absolute inset-0"
     >
       <motion.div
@@ -74,6 +92,9 @@ const StarLayer = ({
 };
 
 const ShootingStar = () => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const config = useMemo(
     () => ({
       top: Math.random() * 70,
@@ -85,6 +106,8 @@ const ShootingStar = () => {
     }),
     [],
   );
+
+  if (!mounted) return null;
 
   return (
     <motion.div
@@ -111,52 +134,79 @@ const ShootingStar = () => {
   );
 };
 
-const Starfield = ({ x, y }: { x: number; y: number }) => (
-  <div className="fixed inset-0 -z-20 overflow-hidden">
-    <StarLayer
-      size={1}
-      opacity={0.3}
-      speed={150}
-      count={600}
-      mouseX={x}
-      mouseY={y}
-      parallaxFactor={-0.01}
-    />
-    <StarLayer
-      size={1.5}
-      opacity={0.5}
-      speed={100}
-      count={250}
-      mouseX={x}
-      mouseY={y}
-      parallaxFactor={-0.02}
-    />
-    <StarLayer
-      size={2}
-      opacity={0.6}
-      speed={70}
-      count={60}
-      mouseX={x}
-      mouseY={y}
-      parallaxFactor={-0.04}
-    />
-    <ShootingStar />
-    <ShootingStar />
-    <ShootingStar />
-    <ShootingStar />
-  </div>
-);
+const Starfield = ({
+  x,
+  y,
+  isLaunching,
+}: {
+  x: number;
+  y: number;
+  isLaunching: boolean;
+}) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  return (
+    <div className="fixed inset-0 -z-20 overflow-hidden">
+      <StarLayer
+        size={1}
+        opacity={0.3}
+        speed={300}
+        count={600}
+        mouseX={x}
+        mouseY={y}
+        parallaxFactor={-0.01}
+        isLaunching={isLaunching}
+      />
+      <StarLayer
+        size={1.5}
+        opacity={0.5}
+        speed={200}
+        count={250}
+        mouseX={x}
+        mouseY={y}
+        parallaxFactor={-0.02}
+        isLaunching={isLaunching}
+      />
+      <StarLayer
+        size={2}
+        opacity={0.6}
+        speed={120}
+        count={60}
+        mouseX={x}
+        mouseY={y}
+        parallaxFactor={-0.04}
+        isLaunching={isLaunching}
+      />
+      {mounted && (
+        <>
+          <ShootingStar />
+          <ShootingStar />
+          <ShootingStar />
+          <ShootingStar />
+        </>
+      )}
+    </div>
+  );
+};
 
 export default function Home() {
   const router = useRouter();
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+  const [isLaunching, setIsLaunching] = useState(true);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       setMousePos({ x: e.clientX, y: e.clientY });
     };
     window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+
+    const timer = setTimeout(() => setIsLaunching(false), 2000);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -166,7 +216,8 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen overflow-hidden transition-all duration-300">
-      <Starfield x={mousePos.x} y={mousePos.y} />
+      <Starfield x={mousePos.x} y={mousePos.y} isLaunching={isLaunching} />
+      <MouseSpotlight x={mousePos.x} y={mousePos.y} />
       {/* ═══════════════════════════════════════════
           HEADER / NAVIGATION (Sticky + Glassmorphic)
           ═══════════════════════════════════════════ */}
