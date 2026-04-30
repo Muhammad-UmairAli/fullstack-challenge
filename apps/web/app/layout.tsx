@@ -21,8 +21,8 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'Portfolio OS',
-  description: 'A portfolio platform for modern builders.',
+  title: 'um.air | Fullstack Engineer',
+  description: 'The personal space and professional portfolio of Umair.',
 };
 
 export default async function RootLayout({

@@ -1,15 +1,15 @@
 <div align="center">
-  <h1>🚀 Fullstack Enterprise Architecture</h1>
-  <p><strong>A production-ready, type-safe monorepo powered by Turborepo, NestJS, Next.js, and Prisma.</strong></p>
+  <h1>🚀 um.air | Fullstack Portfolio</h1>
+  <p><strong>A professional-grade, type-safe monorepo showcasing the engineering work of Umair.</strong></p>
 </div>
 
 ---
 
 ## 📖 Overview
 
-This repository represents the gold standard for modern TypeScript full-stack development in 2024/2025. Designed with scalability, strict type-safety, and developer experience (DX) in mind, it provides a highly decoupled, modular architecture ready for enterprise deployment.
+This repository represents my professional standard for modern TypeScript full-stack development. Designed for scalability and developer experience, it serves as the foundation for my personal projects and production experiments.
 
-By leveraging **pnpm workspaces** and **Turborepo**, we achieve lightning-fast builds, shared configurations, and a unified full-stack environment where the frontend and backend share exact data contracts without code duplication.
+By leveraging **pnpm workspaces** and **Turborepo**, this setup achieves lightning-fast builds and shared configurations between my NestJS backend and Next.js frontend.
 
 > [!IMPORTANT]
 > **Detailed Documentation**: For in-depth technical guides, please refer to the [**Docs Folder**](./docs/README.md).

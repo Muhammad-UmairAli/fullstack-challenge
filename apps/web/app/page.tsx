@@ -24,12 +24,12 @@ export default function Home() {
                 color: 'var(--bg-primary)',
               }}
             >
-              P
+              u
             </div>
             <div>
-              <p className="font-code eyebrow text-theme-faint">Portfolio OS</p>
+              <p className="font-code eyebrow text-theme-faint">um.air</p>
               <h1 className="font-display text-theme-primary text-lg leading-tight font-semibold">
-                Creator Dashboard
+                Umair&apos;s Space
               </h1>
             </div>
           </div>
@@ -168,7 +168,7 @@ export default function Home() {
       >
         <div className="mx-auto flex max-w-6xl items-center justify-between">
           <p className="text-theme-faint text-sm">
-            © 2025 Portfolio OS. Built with NestJS + Next.js.
+            © 2026 um.air. Built with NestJS + Next.js.
           </p>
           <div className="flex gap-4">
             {['GitHub', 'LinkedIn', 'Twitter'].map((social) => (
