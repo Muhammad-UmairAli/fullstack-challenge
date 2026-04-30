@@ -2,7 +2,12 @@
 
 import { cookies } from 'next/headers';
 import { api } from '../../lib/api';
-import type { LoginInput, RegisterInput } from '@repo/validators';
+import type {
+  LoginInput,
+  RegisterInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+} from '@repo/validators';
 
 /**
  * 🔒 SERVER ACTIONS: Secure Authentication
@@ -45,7 +50,7 @@ export async function loginAction(data: LoginInput) {
   return {
     success: false,
     message: result.message,
-    errors: result.errors,
+    ...(result.errors ? { errors: result.errors } : {}),
   };
 }
 
@@ -62,4 +67,14 @@ export async function logoutAction() {
   cookieStore.delete('access_token');
   cookieStore.delete('refresh_token');
   return { success: true };
+}
+
+export async function forgotPasswordAction(data: ForgotPasswordInput) {
+  const result = await api.auth.forgotPassword(data);
+  return result;
+}
+
+export async function resetPasswordAction(data: ResetPasswordInput) {
+  const result = await api.auth.resetPassword(data);
+  return result;
 }

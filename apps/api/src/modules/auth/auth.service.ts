@@ -2,12 +2,19 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service.js';
 import * as argon2 from 'argon2';
+import * as crypto from 'node:crypto';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import type { RegisterInput, LoginInput } from '@repo/validators';
+import type {
+  RegisterInput,
+  LoginInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+} from '@repo/validators';
 
 type JwtPayload = {
   sub: string;
@@ -18,6 +25,8 @@ type DurationString = `${number}${DurationUnit}`;
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
@@ -28,8 +37,9 @@ export class AuthService {
    * 📝 REGISTER: Create a new user
    */
   async register(data: RegisterInput) {
+    const email = data.email.toLowerCase();
     const existing = await this.prisma.user.findUnique({
-      where: { email: data.email },
+      where: { email },
     });
 
     if (existing) {
@@ -40,7 +50,7 @@ export class AuthService {
 
     return this.prisma.client.user.create({
       data: {
-        email: data.email,
+        email,
         password: hashedPassword,
         name: data.name,
       },
@@ -51,10 +61,11 @@ export class AuthService {
    * 🔑 LOGIN: Authenticate user and issue tokens
    */
   async login(data: LoginInput) {
+    const email = data.email.toLowerCase();
     // Note: We use the base prisma client here because we NEED the password for comparison
     // The security extension would return 'undefined' for the password field
     const user = await this.prisma.user.findUnique({
-      where: { email: data.email },
+      where: { email },
     });
 
     if (!user || !user.password) {
@@ -70,6 +81,79 @@ export class AuthService {
     }
 
     return this.generateTokens(user.id, user.email);
+  }
+
+  /**
+   * 📧 FORGOT PASSWORD: Create a reset token
+   */
+  async forgotPassword(data: ForgotPasswordInput) {
+    const email = data.email.toLowerCase();
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    // 🛡️ SECURITY: Always return success to prevent email enumeration
+    if (!user) {
+      this.logger.warn(
+        `Forgot password requested for non-existent user: ${data.email}`,
+      );
+      return { message: 'If an account exists, a reset link has been sent.' };
+    }
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+
+    // 🛡️ SECURITY: Cleanup any existing reset tokens for this user
+    await this.prisma.passwordResetToken.deleteMany({
+      where: { userId: user.id },
+    });
+
+    await this.prisma.passwordResetToken.create({
+      data: {
+        token,
+        userId: user.id,
+        expiresAt,
+      },
+    });
+
+    // 📩 MARKET STANDARD: In a real app, send email here.
+    // For this challenge, we log it so we can use it in the UI.
+    const resetUrl = `${this.configService.get('FRONTEND_URL') || 'http://localhost:3000'}/reset-password?token=${token}`;
+
+    this.logger.log('--- PASSWORD RESET SIMULATION ---');
+    this.logger.log(`User: ${data.email}`);
+    this.logger.log(`Reset URL: ${resetUrl}`);
+    this.logger.log('---------------------------------');
+
+    return { message: 'If an account exists, a reset link has been sent.' };
+  }
+
+  /**
+   * 🔄 RESET PASSWORD: Use token to update password
+   */
+  async resetPassword(data: ResetPasswordInput) {
+    const resetToken = await this.prisma.passwordResetToken.findUnique({
+      where: { token: data.token },
+      include: { user: true },
+    });
+
+    if (!resetToken || resetToken.expiresAt < new Date()) {
+      throw new UnauthorizedException('Invalid or expired reset token');
+    }
+
+    const hashedPassword = await argon2.hash(data.password);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: resetToken.userId },
+        data: { password: hashedPassword },
+      }),
+      this.prisma.passwordResetToken.delete({
+        where: { id: resetToken.id },
+      }),
+    ]);
+
+    return { message: 'Password reset successfully' };
   }
 
   async verifyRefreshToken(refreshToken: string): Promise<JwtPayload> {

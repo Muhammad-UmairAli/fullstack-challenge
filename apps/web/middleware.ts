@@ -7,7 +7,12 @@ import type { NextRequest } from 'next/server';
  * and handles the silent token refresh flow (BFF Pattern).
  */
 
-const AUTH_ROUTES = ['/login', '/register'];
+const AUTH_ROUTES = [
+  '/login',
+  '/register',
+  '/forgot-password',
+  '/reset-password',
+];
 const PUBLIC_ROUTES = ['/about', '/pricing']; // Add strictly public routes here
 
 export async function middleware(request: NextRequest) {

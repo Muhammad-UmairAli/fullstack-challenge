@@ -12,7 +12,12 @@ import {
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service.js';
-import type { RegisterInput, LoginInput } from '@repo/validators';
+import {
+  RegisterDto,
+  LoginDto,
+  ForgotPasswordDto,
+  ResetPasswordDto,
+} from './dto/auth.dto.js';
 import type { Request } from 'express';
 
 @Controller('auth')
@@ -26,7 +31,7 @@ export class AuthController {
    */
   @Throttle({ default: { limit: 3, ttl: 60000 } })
   @Post('register')
-  async register(@Body() data: RegisterInput) {
+  async register(@Body() data: RegisterDto) {
     return this.authService.register(data);
   }
 
@@ -37,9 +42,29 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() data: LoginInput) {
+  async login(@Body() data: LoginDto) {
     const tokens = await this.authService.login(data);
     return tokens; // Returns { accessToken, refreshToken }
+  }
+
+  /**
+   * 📧 POST /auth/forgot-password
+   */
+  @Throttle({ default: { limit: 3, ttl: 60000 } })
+  @Post('forgot-password')
+  @HttpCode(HttpStatus.OK)
+  async forgotPassword(@Body() data: ForgotPasswordDto) {
+    return this.authService.forgotPassword(data);
+  }
+
+  /**
+   * 🔄 POST /auth/reset-password
+   */
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @Post('reset-password')
+  @HttpCode(HttpStatus.OK)
+  async resetPassword(@Body() data: ResetPasswordDto) {
+    return this.authService.resetPassword(data);
   }
 
   /**

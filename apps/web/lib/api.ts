@@ -1,4 +1,9 @@
-import type { RegisterInput, LoginInput } from '@repo/validators';
+import type {
+  RegisterInput,
+  LoginInput,
+  ForgotPasswordInput,
+  ResetPasswordInput,
+} from '@repo/validators';
 import { env } from '../env';
 
 /**
@@ -99,6 +104,18 @@ class ApiClient {
       this.request<{ message: string }>('/auth/logout', {
         method: 'POST',
         body: JSON.stringify({ refreshToken }),
+      }),
+
+    forgotPassword: (data: ForgotPasswordInput) =>
+      this.request<{ message: string }>('/auth/forgot-password', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
+
+    resetPassword: (data: ResetPasswordInput) =>
+      this.request<{ message: string }>('/auth/reset-password', {
+        method: 'POST',
+        body: JSON.stringify(data),
       }),
 
     getMe: (token: string) =>

@@ -5,28 +5,27 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ZodError } from 'zod';
+import { ZodValidationException } from 'nestjs-zod';
 import type { Response } from 'express';
 
 /**
  * 🛠️ ZOD EXCEPTION FILTER
  * Captures Zod validation errors and transforms them into a
  * frontend-friendly 'errors' object mapped by field name.
- *
- * Example Response:
- * {
- *   "success": false,
- *   "message": "Validation failed",
- *   "errors": { "email": "Invalid email format", "password": "Too short" }
- * }
  */
-@Catch(ZodError)
+@Catch(ZodError, ZodValidationException)
 export class ZodExceptionFilter implements ExceptionFilter {
-  catch(exception: ZodError, host: ArgumentsHost) {
+  catch(exception: ZodError | ZodValidationException, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
 
-    const errors = exception.issues.reduce(
-      (acc, issue) => {
+    const zodError =
+      exception instanceof ZodError
+        ? exception
+        : ((exception as ZodValidationException).getZodError() as ZodError);
+
+    const errors = zodError.issues.reduce(
+      (acc: Record<string, string>, issue) => {
         const path = issue.path.join('.');
         acc[path] = issue.message;
         return acc;

@@ -9,6 +9,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { loginAction } from '../../app/actions/auth.actions';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -82,12 +83,12 @@ export function LoginForm() {
             <label className="text-theme-faint text-sm leading-6 font-medium">
               Password
             </label>
-            <button
-              type="button"
+            <Link
+              href="/forgot-password"
               className="text-primary text-xs leading-5 hover:underline"
             >
               Forgot?
-            </button>
+            </Link>
           </div>
           <Input
             type={showPassword ? 'text' : 'password'}
