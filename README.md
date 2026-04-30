@@ -11,6 +11,9 @@ This repository represents the gold standard for modern TypeScript full-stack de
 
 By leveraging **pnpm workspaces** and **Turborepo**, we achieve lightning-fast builds, shared configurations, and a unified full-stack environment where the frontend and backend share exact data contracts without code duplication.
 
+> [!IMPORTANT]
+> **Detailed Documentation**: For in-depth technical guides, please refer to the [**Docs Folder**](./docs/README.md).
+
 ---
 
 ## ✨ Key Technical Features
