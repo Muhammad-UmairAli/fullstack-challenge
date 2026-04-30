@@ -1,20 +1,181 @@
+'use client';
+
+import { motion, type Variants } from 'framer-motion';
 import { logoutAction } from './actions/auth.actions';
-import { redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '../components/ui/theme-toggle';
 
+import { useEffect, useState, useMemo } from 'react';
+
+// ═══════════════════════════════════════════
+// MINIMALIST ANIMATION VARIANTS
+// ═══════════════════════════════════════════
+
+const fastFade: Variants = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: 1,
+    transition: { duration: 0.3, ease: 'easeOut' as const },
+  },
+};
+
+const StarLayer = ({
+  size,
+  opacity,
+  speed,
+  count,
+  mouseX,
+  mouseY,
+  parallaxFactor,
+}: {
+  size: number;
+  opacity: number;
+  speed: number;
+  count: number;
+  mouseX: number;
+  mouseY: number;
+  parallaxFactor: number;
+}) => {
+  const [stars, setStars] = useState('');
+
+  useEffect(() => {
+    const generated = Array.from({ length: count })
+      .map(() => {
+        const x = Math.floor(Math.random() * 3000);
+        const y = Math.floor(Math.random() * 3000);
+        return `${x}px ${y}px var(--text-primary)`;
+      })
+      .join(', ');
+    setStars(generated);
+  }, [count]);
+
+  return (
+    <motion.div
+      animate={{ y: [-2000, 0] }}
+      transition={{ duration: speed, repeat: Infinity, ease: 'linear' }}
+      className="absolute inset-0"
+    >
+      <motion.div
+        animate={{
+          x: mouseX * parallaxFactor,
+          y: mouseY * parallaxFactor,
+        }}
+        transition={{ type: 'spring', damping: 20, stiffness: 50 }}
+        style={{
+          width: `${size}px`,
+          height: `${size}px`,
+          boxShadow: stars,
+          opacity,
+          willChange: 'transform',
+        }}
+      />
+    </motion.div>
+  );
+};
+
+const ShootingStar = () => {
+  const config = useMemo(
+    () => ({
+      top: Math.random() * 70,
+      left: Math.random() * 80,
+      duration: Math.random() * 1.2 + 0.6,
+      delay: Math.random() * 10,
+      angle: Math.random() * 20 - 55, // -35 to -55 range
+      length: Math.random() * 150 + 100,
+    }),
+    [],
+  );
+
+  return (
+    <motion.div
+      initial={{ x: config.length, y: -config.length, opacity: 0 }}
+      animate={{
+        x: -config.length,
+        y: config.length,
+        opacity: [0, 1, 1, 0],
+      }}
+      transition={{
+        duration: config.duration,
+        repeat: Infinity,
+        repeatDelay: Math.random() * 15 + 8,
+        ease: 'easeOut',
+      }}
+      className="absolute h-px bg-linear-to-r from-transparent via-(--accent)/80 to-transparent"
+      style={{
+        width: `${config.length}px`,
+        rotate: `${config.angle}deg`,
+        top: `${config.top}%`,
+        left: `${config.left}%`,
+      }}
+    />
+  );
+};
+
+const Starfield = ({ x, y }: { x: number; y: number }) => (
+  <div className="fixed inset-0 -z-20 overflow-hidden">
+    <StarLayer
+      size={1}
+      opacity={0.3}
+      speed={150}
+      count={600}
+      mouseX={x}
+      mouseY={y}
+      parallaxFactor={-0.01}
+    />
+    <StarLayer
+      size={1.5}
+      opacity={0.5}
+      speed={100}
+      count={250}
+      mouseX={x}
+      mouseY={y}
+      parallaxFactor={-0.02}
+    />
+    <StarLayer
+      size={2}
+      opacity={0.6}
+      speed={70}
+      count={60}
+      mouseX={x}
+      mouseY={y}
+      parallaxFactor={-0.04}
+    />
+    <ShootingStar />
+    <ShootingStar />
+    <ShootingStar />
+    <ShootingStar />
+  </div>
+);
+
 export default function Home() {
+  const router = useRouter();
+  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      setMousePos({ x: e.clientX, y: e.clientY });
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
+
   const handleLogout = async () => {
-    'use server';
     await logoutAction();
-    redirect('/login');
+    router.push('/login');
   };
 
   return (
     <div className="relative min-h-screen overflow-hidden transition-all duration-300">
+      <Starfield x={mousePos.x} y={mousePos.y} />
       {/* ═══════════════════════════════════════════
           HEADER / NAVIGATION (Sticky + Glassmorphic)
           ═══════════════════════════════════════════ */}
-      <header className="nav-sticky px-6 py-4">
+      <motion.header
+        variants={fastFade}
+        initial="initial"
+        animate="animate"
+        className="nav-sticky px-6 py-4"
+      >
         <div className="mx-auto flex w-full max-w-6xl items-center justify-between">
           <div className="group flex items-center gap-3">
             <div
@@ -35,26 +196,29 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <form action={handleLogout}>
-              <button
-                type="submit"
-                className="glass hover-border-accent rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300"
-              >
-                Logout
-              </button>
-            </form>
+            <button
+              onClick={handleLogout}
+              className="glass hover-border-accent rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300"
+            >
+              Logout
+            </button>
           </div>
         </div>
-      </header>
+      </motion.header>
 
       {/* ═══════════════════════════════════════════
           HERO SECTION
           ═══════════════════════════════════════════ */}
-      <main className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-14 sm:px-8">
+      <motion.main
+        initial="initial"
+        animate="animate"
+        variants={fastFade}
+        className="relative z-10 mx-auto flex w-full max-w-6xl flex-col gap-12 px-6 py-14 sm:px-8"
+      >
         {/* Status badge */}
         <section className="text-center sm:text-left">
           <div
-            className="mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-1.5 transition-transform duration-300 hover:scale-105"
+            className="mb-8 inline-flex items-center gap-2 rounded-full border px-4 py-1.5"
             style={{
               borderColor: 'var(--border-color)',
               background: 'var(--surface-card)',
@@ -69,18 +233,20 @@ export default function Home() {
             </span>
           </div>
 
-          <h1 className="font-display text-theme-primary mb-6 max-w-3xl text-5xl font-extrabold sm:text-6xl">
+          <h1 className="font-display text-theme-primary mb-6 max-w-3xl text-5xl font-extrabold sm:text-7xl">
             Build. Showcase.{' '}
             <span style={{ color: 'var(--accent)' }}>Grow.</span>
           </h1>
-          <p className="copy-sm text-theme-muted mb-10 max-w-2xl">
+          <p className="copy-sm text-theme-muted mb-10 max-w-2xl text-lg leading-relaxed">
             Your authentication, security, and UI systems are production-ready.
             Start adding projects, case studies, and social proof to launch a
             portfolio that stands out.
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-3 sm:justify-start">
-            <button className="btn-primary">Create Case Study</button>
-            <button className="glass hover-border-accent rounded-xl px-8 py-3 text-sm font-medium transition-all duration-300">
+          <div className="flex flex-wrap items-center justify-center gap-4 sm:justify-start">
+            <button className="btn-primary shadow-accent/20 px-10 py-4 text-base shadow-xl">
+              Create Case Study
+            </button>
+            <button className="glass hover-border-accent rounded-xl px-10 py-4 text-base font-medium transition-all duration-300">
               Edit Profile Theme
             </button>
           </div>
@@ -107,7 +273,10 @@ export default function Home() {
               tone: 'from-violet-400 to-purple-500',
             },
           ].map((card) => (
-            <div key={card.label} className="glass-card p-7">
+            <div
+              key={card.label}
+              className="glass-card hover:border-accent/30 p-7 transition-all duration-500"
+            >
               <p className="eyebrow text-theme-faint mb-4">{card.label}</p>
               <p
                 className={`font-display bg-linear-to-r ${card.tone} bg-clip-text text-4xl font-bold text-transparent`}
@@ -146,7 +315,7 @@ export default function Home() {
             ].map((tech) => (
               <span
                 key={tech}
-                className="glass hover-border-accent rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300"
+                className="glass hover-border-accent hover:bg-accent hover:text-bg-primary cursor-default rounded-lg px-4 py-2 text-sm font-medium transition-all duration-300"
                 style={{ color: 'var(--text-primary)' }}
               >
                 {tech}
@@ -154,7 +323,7 @@ export default function Home() {
             ))}
           </div>
         </section>
-      </main>
+      </motion.main>
 
       {/* ═══════════════════════════════════════════
           FOOTER
@@ -175,7 +344,7 @@ export default function Home() {
               <a
                 key={social}
                 href="#"
-                className="text-theme-faint hover-text-accent text-sm transition-colors duration-300"
+                className="text-theme-faint hover:text-accent text-sm transition-colors duration-300"
               >
                 {social}
               </a>
@@ -183,24 +352,6 @@ export default function Home() {
           </div>
         </div>
       </footer>
-
-      {/* ═══════════════════════════════════════════
-          AMBIENT BACKGROUND EFFECTS
-          ═══════════════════════════════════════════ */}
-      <div className="pointer-events-none absolute inset-0 -z-10">
-        <div
-          className="absolute -top-[10%] -left-[10%] h-[40%] w-[40%] rounded-full blur-[120px]"
-          style={{
-            background: 'color-mix(in srgb, var(--accent) 15%, transparent)',
-          }}
-        />
-        <div
-          className="absolute -right-[10%] -bottom-[10%] h-[40%] w-[40%] rounded-full blur-[120px]"
-          style={{
-            background: 'color-mix(in srgb, var(--accent) 10%, transparent)',
-          }}
-        />
-      </div>
     </div>
   );
 }
