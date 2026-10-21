@@ -61,6 +61,12 @@ describe('Auth (e2e)', () => {
     expect(registered.body.data).toMatchObject({ email });
     expect(registered.body.data).not.toHaveProperty('password');
 
+    // Unique index violation surfaces as 409 through the Prisma driver adapter.
+    await http()
+      .post('/api/v1/auth/register')
+      .send({ email, password })
+      .expect(409);
+
     const login = await http()
       .post('/api/v1/auth/login')
       .send({ email, password })
@@ -84,7 +90,19 @@ describe('Auth (e2e)', () => {
     const rotated = refreshed.body.data.refreshToken as string;
     expect(rotated).not.toBe(refreshToken);
 
-    // Replaying the old token is treated as theft: it fails and kills the new session too.
+    // A second request with the same token right away (parallel browser requests)
+    // is within the grace window and still succeeds.
+    await http()
+      .post('/api/v1/auth/refresh')
+      .send({ refreshToken })
+      .expect(200);
+
+    // Once the grace window has passed, replaying it is treated as theft: it fails
+    // and every session for the user is revoked, including the rotated one.
+    await prisma.refreshToken.updateMany({
+      where: { user: { email }, rotatedAt: { not: null } },
+      data: { rotatedAt: new Date(Date.now() - 60_000) },
+    });
     await http()
       .post('/api/v1/auth/refresh')
       .send({ refreshToken })

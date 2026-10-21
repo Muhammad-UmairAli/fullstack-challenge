@@ -46,6 +46,9 @@ model RefreshToken {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   isRevoked Boolean  @default(false)
+  /// Set when the token was revoked by rotation (exchanged for a new pair), as opposed
+  /// to logout or a password reset. Lets refresh tell concurrent use from replay.
+  rotatedAt DateTime?
   expiresAt DateTime
   createdAt DateTime @default(now())
 

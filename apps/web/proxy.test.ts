@@ -33,11 +33,11 @@ describe('proxy', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('redirects signed-in users away from auth pages', async () => {
+  it('leaves auth pages to the (auth) layout, even with a session cookie', async () => {
+    // The cookie may hold a revoked token; the layout verifies it with the API.
     const res = await proxy(request('/login', { access_token: 'a' }));
 
-    expect(res.status).toBe(307);
-    expect(res.headers.get('location')).toBe('http://localhost:3000/');
+    expect(res.headers.get('x-middleware-next')).toBe('1');
   });
 
   it('allows anonymous access to auth pages', async () => {
@@ -95,20 +95,35 @@ describe('proxy', () => {
     expect(res.cookies.get('refresh_token')?.maxAge).toBeUndefined();
   });
 
-  it('falls back to login when the refresh is rejected', async () => {
+  it('ends the session when the refresh is rejected', async () => {
     fetchMock.mockResolvedValue(apiResponse(401, { success: false }));
 
     const res = await proxy(request('/', { refresh_token: 'revoked' }));
 
     expect(res.status).toBe(307);
     expect(res.headers.get('location')).toContain('/login');
+    expect(res.cookies.get('refresh_token')?.value).toBe('');
   });
 
-  it('falls back to login when the API is unreachable', async () => {
-    fetchMock.mockRejectedValue(new TypeError('fetch failed'));
+  it.each([
+    [
+      'the API is unreachable',
+      () => Promise.reject(new TypeError('fetch failed')),
+    ],
+    [
+      'the API is overloaded (503)',
+      () => Promise.resolve(apiResponse(503, {})),
+    ],
+    [
+      'the refresh is rate limited (429)',
+      () => Promise.resolve(apiResponse(429, {})),
+    ],
+  ])('keeps the session cookies when %s', async (_case, respond) => {
+    fetchMock.mockImplementation(respond);
 
-    const res = await proxy(request('/', { refresh_token: 'any' }));
+    const res = await proxy(request('/', { refresh_token: 'still-valid' }));
 
     expect(res.status).toBe(307);
+    expect(res.cookies.get('refresh_token')).toBeUndefined();
   });
 });

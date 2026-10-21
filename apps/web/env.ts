@@ -18,6 +18,7 @@ export const env = createEnv({
   runtimeEnv: {
     API_URL: process.env.API_URL,
   },
-  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  // Only "1"/"true" skip; "false" or "0" must keep validation on.
+  skipValidation: ['1', 'true'].includes(process.env.SKIP_ENV_VALIDATION ?? ''),
   emptyStringAsUndefined: true,
 });

@@ -27,6 +27,12 @@ describe('validate (env)', () => {
     );
   });
 
+  it('rejects identical access and refresh secrets', () => {
+    expect(() =>
+      validate({ ...valid, JWT_REFRESH_SECRET: valid.JWT_ACCESS_SECRET }),
+    ).toThrow('Invalid environment variables');
+  });
+
   it('rejects malformed expirations', () => {
     expect(() =>
       validate({ ...valid, JWT_REFRESH_EXPIRATION: '7 days' }),

@@ -55,7 +55,7 @@ function toActionResponse(result: ApiResponse<unknown>): ActionResponse {
 
 export async function loginAction(
   data: LoginInput,
-  options: { rememberMe?: boolean } = {},
+  options?: { rememberMe?: boolean } | null,
 ): Promise<ActionResponse> {
   const parsed = LoginSchema.safeParse(data);
   if (!parsed.success) return invalidInput(parsed.error);
@@ -64,8 +64,9 @@ export async function loginAction(
 
   if (result.success && result.data) {
     // BFF (Backend-For-Frontend) cookie management: tokens never reach client JS.
+    // Client-controlled input: only an explicit `false` opts out of persistence.
     setAuthCookies(await cookies(), result.data, {
-      persistent: options.rememberMe ?? true,
+      persistent: options?.rememberMe !== false,
     });
     return { success: true };
   }

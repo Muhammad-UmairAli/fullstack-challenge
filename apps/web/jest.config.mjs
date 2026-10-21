@@ -7,6 +7,9 @@ const createJestConfig = nextJest({ dir: './' });
 const config = {
   testEnvironment: 'node',
   testMatch: ['<rootDir>/**/*.test.ts'],
+  // Keep Jest's file crawler out of build output, which `next build` may be
+  // writing concurrently when Turbo runs test and build in parallel.
+  modulePathIgnorePatterns: ['<rootDir>/.next/'],
   // Replace the validated env module so tests do not depend on real configuration.
   moduleNameMapper: {
     '^(\\.{1,2}/)+env$': '<rootDir>/test/env.mock.ts',

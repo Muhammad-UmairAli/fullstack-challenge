@@ -32,6 +32,13 @@ export type AuthTokens = {
 };
 
 const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+/**
+ * How long a just-rotated refresh token may still be exchanged. Browsers send several
+ * requests at once (navigation + prefetches), each carrying the same refresh cookie;
+ * the losers of that race must not be mistaken for a stolen token being replayed.
+ */
+export const ROTATION_GRACE_MS = 10_000;
 const GENERIC_RESET_MESSAGE =
   'If an account exists, a reset link has been sent.';
 
@@ -62,7 +69,8 @@ export class AuthService {
         data: {
           email: data.email.toLowerCase(),
           password: hashedPassword,
-          name: data.name,
+          // Forms submit '' for a blank optional field; store it as "no name".
+          name: data.name || null,
         },
         select: { id: true, email: true, name: true, createdAt: true },
       });
@@ -150,69 +158,95 @@ export class AuthService {
       throw new UnauthorizedException('Invalid or expired reset token');
     }
 
+    // Hash before opening the transaction so it holds no locks during argon2.
     const hashedPassword = await argon2.hash(data.password);
 
-    await this.prisma.$transaction([
-      this.prisma.user.update({
+    await this.prisma.$transaction(async (tx) => {
+      // Consuming the token is the gate: of two concurrent requests with the same
+      // token, only one deletes it, so a reset link can never be used twice.
+      const { count } = await tx.passwordResetToken.deleteMany({
+        where: { id: resetToken.id, expiresAt: { gt: new Date() } },
+      });
+      if (count === 0) {
+        throw new UnauthorizedException('Invalid or expired reset token');
+      }
+
+      await tx.user.update({
         where: { id: resetToken.userId },
         data: { password: hashedPassword },
-      }),
-      this.prisma.passwordResetToken.deleteMany({
+      });
+      await tx.passwordResetToken.deleteMany({
         where: { userId: resetToken.userId },
-      }),
+      });
       // A password reset signs the user out everywhere.
-      this.prisma.refreshToken.updateMany({
+      await tx.refreshToken.updateMany({
         where: { userId: resetToken.userId, isRevoked: false },
         data: { isRevoked: true },
-      }),
-    ]);
+      });
+    });
 
     return { message: 'Password reset successfully' };
   }
 
   /**
    * REFRESH: Rotate refresh tokens with reuse detection.
+   *
+   * - Unused token: atomically marked rotated, a new pair is issued.
+   * - Rotated within ROTATION_GRACE_MS: a concurrent request from the same client;
+   *   it also gets a new pair rather than being treated as theft.
+   * - Rotated earlier: a replay of a superseded token, which suggests theft, so
+   *   every session for the user is revoked.
+   * - Revoked by logout or password reset: rejected without touching other sessions.
    */
   async refreshTokens(refreshToken: string): Promise<AuthTokens> {
     const payload = await this.verifyRefreshToken(refreshToken);
+    const tokenHash = hashToken(refreshToken);
 
-    const stored = await this.prisma.refreshToken.findUnique({
-      where: { token: hashToken(refreshToken) },
-    });
+    let stored = await this.findRefreshToken(tokenHash);
 
-    if (!stored || stored.userId !== payload.sub) {
+    if (
+      !stored ||
+      stored.userId !== payload.sub ||
+      stored.expiresAt <= new Date()
+    ) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    if (!stored.isRevoked) {
+      // Conditional update makes rotation atomic: of concurrent requests with the
+      // same token, exactly one flips it.
+      const { count } = await this.prisma.refreshToken.updateMany({
+        where: { id: stored.id, isRevoked: false },
+        data: { isRevoked: true, rotatedAt: new Date() },
+      });
+
+      if (count === 0) {
+        // Lost the race; re-read to see how the winner revoked it.
+        stored = await this.findRefreshToken(tokenHash);
+      }
+    }
+
+    if (!stored) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
     if (stored.isRevoked) {
-      // SECURITY: A validly signed but already-rotated token is being replayed,
-      // which suggests it was stolen. Revoke every session for this user.
-      await this.revokeAllSessions(stored.userId);
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      if (!stored.rotatedAt) {
+        // Revoked by logout or a password reset: just reject it.
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+
+      if (Date.now() - stored.rotatedAt.getTime() > ROTATION_GRACE_MS) {
+        // SECURITY: A superseded token is being replayed, which suggests it was
+        // stolen. Revoke every session for this user.
+        await this.revokeAllSessions(stored.userId);
+        throw new UnauthorizedException('Invalid or expired refresh token');
+      }
+      // Otherwise: a concurrent request from the same client within the grace window.
     }
 
-    if (stored.expiresAt <= new Date()) {
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
-
-    // Conditional update makes rotation atomic: of two concurrent requests with the
-    // same token, only one can flip isRevoked, the other is treated as reuse.
-    const { count } = await this.prisma.refreshToken.updateMany({
-      where: { id: stored.id, isRevoked: false },
-      data: { isRevoked: true },
-    });
-
-    if (count === 0) {
-      await this.revokeAllSessions(stored.userId);
-      throw new UnauthorizedException('Invalid or expired refresh token');
-    }
-
-    const user = await this.prisma.user.findUnique({
-      where: { id: stored.userId },
-      select: { id: true, email: true, isActive: true },
-    });
-
-    if (!user || !user.isActive) {
+    const { user } = stored;
+    if (!user.isActive) {
       throw new UnauthorizedException('Access Denied');
     }
 
@@ -239,6 +273,13 @@ export class AuthService {
     } catch {
       throw new UnauthorizedException('Invalid refresh token');
     }
+  }
+
+  private findRefreshToken(tokenHash: string) {
+    return this.prisma.refreshToken.findUnique({
+      where: { token: tokenHash },
+      include: { user: { select: { id: true, email: true, isActive: true } } },
+    });
   }
 
   private async revokeAllSessions(userId: string) {

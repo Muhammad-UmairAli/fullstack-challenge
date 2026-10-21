@@ -31,6 +31,7 @@ CREATE TABLE "RefreshToken" (
     "token" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "isRevoked" BOOLEAN NOT NULL DEFAULT false,
+    "rotatedAt" TIMESTAMP(3),
     "expiresAt" TIMESTAMP(3) NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

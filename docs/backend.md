@@ -47,7 +47,7 @@ The system implements a secure **Access/Refresh Token** strategy:
 
 1. **Access Token**: Short-lived (default 15m), sent in the `Authorization` header as a Bearer token.
 2. **Refresh Token**: Long-lived (default 7d), returned in the response body (the Next.js BFF stores it in an HttpOnly cookie). Only its SHA-256 hash is stored in the database.
-3. **Rotation & Reuse Detection**: Every refresh revokes the presented token atomically and issues a new pair. Replaying an already-rotated token revokes all of the user's sessions.
+3. **Rotation & Reuse Detection**: Every refresh marks the presented token as rotated (atomically) and issues a new pair. Requests that reuse it within a 10-second grace window (parallel browser requests) also get a pair; replaying it after that is treated as theft and revokes all of the user's sessions. Tokens revoked by logout or a password reset are simply rejected.
 4. **Hashing**: Passwords are hashed with `argon2`; password-reset tokens are stored as SHA-256 hashes and expire after 1 hour. A password reset signs the user out everywhere.
 5. **Data Exposure**: The Prisma client omits `User.password` from every result by default; only the login query selects it.
 

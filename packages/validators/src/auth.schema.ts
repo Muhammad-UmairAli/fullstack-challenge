@@ -29,12 +29,14 @@ const strongPassword = z
 export const RegisterSchema = z.object({
   email,
   password: strongPassword,
+  // Optional: forms submit '' for a blank field, which must not fail min(2).
   name: z
     .string()
     .trim()
     .min(2, { error: 'Name must be at least 2 characters long' })
     .max(100, { error: 'Name must be at most 100 characters long' })
-    .optional(),
+    .optional()
+    .or(z.literal('')),
 });
 
 export const LoginSchema = z.object({
