@@ -14,14 +14,5 @@ export default defineConfig(
   nextVitals,
   nextTs,
   sharedRules,
-  {
-    // React Compiler rules new in eslint-plugin-react-hooks 7 (eslint-config-next 16).
-    // Warn while existing components (mount flags, random values in useMemo) are
-    // migrated; flip back to "error" once `pnpm lint` reports no warnings.
-    rules: {
-      'react-hooks/set-state-in-effect': 'warn',
-      'react-hooks/purity': 'warn',
-    },
-  },
   prettierConfig,
 );

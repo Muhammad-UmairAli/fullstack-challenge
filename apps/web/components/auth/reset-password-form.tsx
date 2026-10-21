@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ResetPasswordSchema } from '@repo/validators';
 import type { ResetPasswordInput } from '@repo/validators';
@@ -28,14 +28,14 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm<ResetPasswordInput>({
     resolver: zodResolver(ResetPasswordSchema),
     defaultValues: { token },
   });
 
-  const passwordValue = watch('password') ?? '';
+  const passwordValue = useWatch({ control, name: 'password' }) ?? '';
 
   const getPasswordStrength = (password: string) => {
     let score = 0;

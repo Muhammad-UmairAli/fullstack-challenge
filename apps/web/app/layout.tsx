@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk, JetBrains_Mono } from 'next/font/google';
 import { getServerSession } from '../lib/auth-server';
 import { SessionProvider } from '../components/providers/session-provider';
 import { ThemeProvider } from '../components/providers/theme-provider';
+import { themeInitScript } from '../lib/theme';
 import './globals.css';
 
 const inter = Inter({
@@ -33,10 +34,16 @@ export default async function RootLayout({
   const user = await getServerSession();
 
   return (
+    // themeInitScript adds the saved theme class to <html> before hydration, so
+    // its class attribute intentionally differs from the server render.
     <html
       lang="en"
       className={`${inter.variable} ${spaceGrotesk.variable} ${jetBrainsMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="flex min-h-full flex-col">
         <ThemeProvider>
           <SessionProvider user={user}>{children}</SessionProvider>
