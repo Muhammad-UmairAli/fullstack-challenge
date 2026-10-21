@@ -12,6 +12,8 @@ This directory contains detailed technical documentation for the **Fullstack Ent
   - Deep dive into the security architecture and end-to-end auth flows.
 - [**Design System & Theming**](./design-system.md)
   - Detailed specs for the premium Portfolio Design System.
+- [**Architecture Decision Records**](./architecture/README.md)
+  - Recorded architectural decisions, starting with [ADR-0001: Real-time synchronization layer](./architecture/0001-real-time-synchronization.md).
 
 ## 🚀 Quick Links
 
