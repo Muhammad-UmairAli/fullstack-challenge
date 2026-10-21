@@ -118,12 +118,15 @@ describe('proxy', () => {
       'the refresh is rate limited (429)',
       () => Promise.resolve(apiResponse(429, {})),
     ],
-  ])('keeps the session cookies when %s', async (_case, respond) => {
+  ])('answers 503 and keeps the session when %s', async (_case, respond) => {
     fetchMock.mockImplementation(respond);
 
     const res = await proxy(request('/', { refresh_token: 'still-valid' }));
 
-    expect(res.status).toBe(307);
+    // No redirect to a login page the user cannot use, and no logout.
+    expect(res.status).toBe(503);
+    expect(res.headers.get('retry-after')).toBe('5');
+    expect(res.headers.get('location')).toBeNull();
     expect(res.cookies.get('refresh_token')).toBeUndefined();
   });
 });

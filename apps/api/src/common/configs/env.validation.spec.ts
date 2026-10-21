@@ -3,6 +3,7 @@ import { Logger } from '@nestjs/common';
 import { parseTrustProxy, validate } from './env.validation.js';
 
 const valid = {
+  NODE_ENV: 'production',
   DATABASE_URL: 'postgresql://u:p@localhost:5432/db',
   JWT_ACCESS_SECRET: 'a'.repeat(32),
   JWT_REFRESH_SECRET: 'r'.repeat(32),
@@ -16,9 +17,15 @@ describe('validate (env)', () => {
     const env = validate({ ...valid, PORT: '4000' });
 
     expect(env.PORT).toBe(4000);
-    expect(env.NODE_ENV).toBe('development');
     expect(env.JWT_ACCESS_EXPIRATION).toBe('15m');
     expect(env.THROTTLE_LIMIT).toBe(100);
+  });
+
+  it('requires NODE_ENV so dev-only features cannot switch on by default', () => {
+    const { NODE_ENV: _omitted, ...withoutNodeEnv } = valid;
+    expect(() => validate(withoutNodeEnv)).toThrow(
+      'Invalid environment variables',
+    );
   });
 
   it('rejects short JWT secrets', () => {

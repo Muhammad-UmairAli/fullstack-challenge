@@ -6,6 +6,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 10
+    # pnpm refuses versions younger than 24h (minimumReleaseAge in
+    # pnpm-workspace.yaml); wait them out so update PRs can install in CI.
+    cooldown:
+      default-days: 2
     groups:
       # Batch low-risk updates; majors still arrive as individual PRs for review.
       minor-and-patch:

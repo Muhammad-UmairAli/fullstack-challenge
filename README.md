@@ -152,16 +152,17 @@ Each `.env.example` documents every variable it needs. The API validates its env
 
 **`apps/api/.env`** _(Required for the NestJS API)_
 
-| Variable                                           | Default                 | Notes                                                                                                    |
-| -------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                                     | (required)              | PostgreSQL connection string                                                                             |
-| `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET`         | (required)              | 32+ characters each, different from each other                                                           |
-| `JWT_ACCESS_EXPIRATION` / `JWT_REFRESH_EXPIRATION` | `15m` / `7d`            | Format `<number><s\|m\|h\|d>`                                                                            |
-| `PORT`                                             | `3001`                  |                                                                                                          |
-| `FRONTEND_URL`                                     | `http://localhost:3000` | CORS origin                                                                                              |
-| `TRUST_PROXY`                                      | `false`                 | Proxies trusted for `X-Forwarded-For`; needed for per-user rate limits behind the BFF or a load balancer |
-| `THROTTLE_TTL_MS` / `THROTTLE_LIMIT`               | `60000` / `100`         | Global rate limit per client                                                                             |
-| `SWAGGER_ENABLED`                                  | on outside production   | Set `true` to expose `/api/docs` in production                                                           |
+| Variable                                           | Default                 | Notes                                                                                                                            |
+| -------------------------------------------------- | ----------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `NODE_ENV`                                         | (required)              | `development`, `test` or `production`; no default so dev-only features (Swagger, logged reset links) never switch on by accident |
+| `DATABASE_URL`                                     | (required)              | PostgreSQL connection string                                                                                                     |
+| `JWT_ACCESS_SECRET` / `JWT_REFRESH_SECRET`         | (required)              | 32+ characters each, different from each other                                                                                   |
+| `JWT_ACCESS_EXPIRATION` / `JWT_REFRESH_EXPIRATION` | `15m` / `7d`            | Format `<number><s\|m\|h\|d>`                                                                                                    |
+| `PORT`                                             | `3001`                  |                                                                                                                                  |
+| `FRONTEND_URL`                                     | `http://localhost:3000` | CORS origin                                                                                                                      |
+| `TRUST_PROXY`                                      | `false`                 | Proxies trusted for `X-Forwarded-For`; needed for per-user rate limits behind the BFF or a load balancer                         |
+| `THROTTLE_TTL_MS` / `THROTTLE_LIMIT`               | `60000` / `100`         | Global rate limit per client                                                                                                     |
+| `SWAGGER_ENABLED`                                  | on outside production   | Set `true` to expose `/api/docs` in production                                                                                   |
 
 **`apps/web/.env`** _(Required for the Next.js web app)_
 

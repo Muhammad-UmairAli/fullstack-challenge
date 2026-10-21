@@ -89,15 +89,29 @@ export async function proxy(request: NextRequest) {
     return response;
   }
 
-  // Denied: no usable session right now
+  if (refresh.status === 'unavailable') {
+    // The session may still be valid, so neither log the user out nor send them to
+    // a login page they cannot use while the API is down. Cookies are untouched,
+    // and the next request (a reload) retries the refresh.
+    return new NextResponse(
+      'The service is temporarily unavailable. Please try again in a moment.',
+      {
+        status: 503,
+        headers: {
+          'Retry-After': '5',
+          'Cache-Control': 'no-store',
+          'Content-Type': 'text/plain; charset=utf-8',
+        },
+      },
+    );
+  }
+
+  // Denied: no valid session
   const loginUrl = new URL('/login', request.url);
   loginUrl.searchParams.set('redirect', pathname);
 
   const response = NextResponse.redirect(loginUrl);
-  // Keep cookies on transient failures so the session resumes once the API is back.
-  if (refresh.status === 'rejected') {
-    clearAuthCookies(response.cookies);
-  }
+  clearAuthCookies(response.cookies);
   return response;
 }
 
@@ -107,9 +121,11 @@ export const config = {
      * Match all request paths except for the ones starting with:
      * - api (API routes)
      * - _next/ (Next.js internals: static files, image optimization, HMR)
+     * - .well-known/ (ACME challenges, app links, security.txt)
      * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     * - static asset files by extension (routes containing dots still match)
+     * - public files by extension. Routes that merely contain a dot (e.g. /u/jane.doe)
+     *   still match; add an extension here before serving a new public file type.
      */
-    '/((?!api|_next/|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpe?g|gif|webp|avif|ico|txt|xml|webmanifest|js|css|map|woff2?)$).*)',
+    '/((?!api|_next/|\\.well-known/|favicon.ico|sitemap.xml|robots.txt|.*\\.(?:svg|png|jpe?g|gif|webp|avif|bmp|ico|txt|xml|json|webmanifest|pdf|csv|zip|gz|mp4|webm|mp3|wav|ogg|woff2?|ttf|otf|eot|wasm|html|js|mjs|css|map)$).*)',
   ],
 };

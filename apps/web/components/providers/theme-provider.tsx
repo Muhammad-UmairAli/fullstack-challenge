@@ -43,7 +43,12 @@ function getServerSnapshot(): Theme {
 }
 
 function setTheme(nextTheme: Theme) {
-  window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+  } catch {
+    // Storage blocked (private mode, site data disabled): still switch the theme
+    // for this page view, it just will not persist.
+  }
   document.documentElement.classList.remove(
     themeClassName('light'),
     themeClassName('dark'),

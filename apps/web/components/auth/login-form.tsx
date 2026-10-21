@@ -17,7 +17,7 @@ import { Eye, EyeOff } from 'lucide-react';
  * ✨ USER LOGIN
  * Authentication form using Next.js Server Actions.
  */
-export function LoginForm() {
+export function LoginForm({ redirectTo = '/' }: { redirectTo?: string }) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [serverError, setServerError] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
@@ -52,7 +52,7 @@ export function LoginForm() {
         return;
       }
 
-      router.push('/');
+      router.push(redirectTo);
       router.refresh();
     } catch {
       setServerError('A server error occurred. Please try again.');

@@ -12,9 +12,9 @@ const booleanString = z.enum(['true', 'false']).transform((v) => v === 'true');
  */
 export const envSchema = z
   .object({
-    NODE_ENV: z
-      .enum(['development', 'production', 'test'])
-      .default('development'),
+    // Required, no default: dev-only behavior (Swagger, logged reset links) must
+    // never switch on because a deployment forgot to set it.
+    NODE_ENV: z.enum(['development', 'production', 'test']),
     PORT: z.coerce.number().int().min(1).max(65535).default(3001),
     FRONTEND_URL: z.url().default('http://localhost:3000'),
     DATABASE_URL: z.url(),

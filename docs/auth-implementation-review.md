@@ -173,7 +173,7 @@ flowchart LR
 - **Logic**:
   - If access token exists -> Proceed.
   - If access token expired but refresh token exists -> Call `/auth/refresh`, set new cookies on the response **and** on the forwarded request (so Server Components rendering this request see them), and proceed.
-  - If the refresh is rejected (400/401) -> Clear cookies and redirect to `/login`. On network errors, timeouts, 429 or 5xx the cookies are kept.
+  - If the refresh is rejected (400/401) -> Clear cookies and redirect to `/login`. On network errors, timeouts, 429 or 5xx -> respond 503 with `Retry-After` and keep the cookies.
   - If neither exists -> Redirect to `/login`.
 - **Runtime**: Next.js 16 runs the proxy on the Node.js runtime before the page renders.
 

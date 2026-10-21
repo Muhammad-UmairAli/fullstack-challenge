@@ -2,13 +2,24 @@ import Link from 'next/link';
 import { LoginForm } from '../../../components/auth/login-form';
 import type { Metadata } from 'next';
 import { ThemeToggle } from '../../../components/ui/theme-toggle';
+import { safeRedirectPath } from '../../../lib/utils';
 
 export const metadata: Metadata = {
   title: 'Login | Fullstack Challenge',
   description: 'Sign in to your account',
 };
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string | string[] }>;
+}) {
+  // Set by the proxy when it bounces a signed-out user; only same-site paths are honoured.
+  const { redirect } = await searchParams;
+  const redirectTo = safeRedirectPath(
+    Array.isArray(redirect) ? redirect[0] : redirect,
+  );
+
   return (
     <div className="auth-shell bg-theme-background relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-16 sm:px-6">
       <div className="absolute top-6 right-4 z-20 sm:right-6">
@@ -70,7 +81,7 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <LoginForm />
+        <LoginForm redirectTo={redirectTo} />
 
         <div className="text-theme-faint copy-sm pt-2 text-center">
           Don&apos;t have an account?{' '}

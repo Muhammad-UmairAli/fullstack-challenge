@@ -1,6 +1,6 @@
-import { ResetPasswordForm } from '../../../components/auth/reset-password-form';
+import { ResetPasswordForm } from '../../components/auth/reset-password-form';
 import type { Metadata } from 'next';
-import { ThemeToggle } from '../../../components/ui/theme-toggle';
+import { ThemeToggle } from '../../components/ui/theme-toggle';
 import { redirect } from 'next/navigation';
 
 export const metadata: Metadata = {
