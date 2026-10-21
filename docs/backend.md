@@ -24,12 +24,16 @@ apps/api/src/
 ├── common/              # Shared logic (guards, filters, interceptors, configs)
 │   ├── configs/         # Environment and feature configurations
 │   ├── filters/         # Global exception handling (Zod, HTTP)
-│   ├── guards/          # Security & Auth guards (JWT, Refresh)
-│   └── interceptors/    # Response transformation and logging
-├── database/            # Prisma service and database module
+│   ├── guards/          # JwtAuthGuard (access-token protection)
+│   ├── interceptors/    # Response transformation and logging
+│   ├── types/           # Shared request types
+│   └── utils/           # Token hashing and helpers
+├── database/            # Prisma service and global database module
 ├── modules/             # Feature-based modules
 │   ├── auth/            # Authentication & User management
+│   ├── health/          # Liveness / readiness probes
 │   └── projects/        # Business logic for project management
+├── app.setup.ts         # Request pipeline shared by main.ts and e2e tests
 └── main.ts              # Application entry point
 ```
 
@@ -42,14 +46,17 @@ apps/api/src/
 The system implements a secure **Access/Refresh Token** strategy:
 
 1. **Access Token**: Short-lived (default 15m), sent in the `Authorization` header as a Bearer token.
-2. **Refresh Token**: Long-lived (default 7d), stored in a database (hashed) and sent via HttpOnly cookies (or response body depending on client).
-3. **Hashing**: Passwords are secure-hashed using `argon2`.
+2. **Refresh Token**: Long-lived (default 7d), returned in the response body (the Next.js BFF stores it in an HttpOnly cookie). Only its SHA-256 hash is stored in the database.
+3. **Rotation & Reuse Detection**: Every refresh marks the presented token as rotated (atomically) and issues a new pair. Requests that reuse it within a 10-second grace window (parallel browser requests) also get a pair; replaying it after that is treated as theft and revokes all of the user's sessions. Tokens revoked by logout or a password reset are simply rejected.
+4. **Hashing**: Passwords are hashed with `argon2`; password-reset tokens are stored as SHA-256 hashes and expire after 1 hour. A password reset signs the user out everywhere.
+5. **Data Exposure**: The Prisma client omits `User.password` from every result by default; only the login query selects it.
 
 ### Security Features
 
 - **Helmet**: Protects the app from well-known web vulnerabilities by setting appropriate HTTP headers.
-- **Throttler**: Global rate limiting to prevent brute-force attacks.
+- **Throttler**: Global per-client rate limit (`THROTTLE_LIMIT` per `THROTTLE_TTL_MS`, default 100/min) plus stricter limits on auth routes. Behind the Next.js BFF or a load balancer, set `TRUST_PROXY` so clients are identified by their forwarded IP rather than the proxy's.
 - **CORS**: Strictly configured to only allow requests from the trusted frontend.
+- **Swagger**: Disabled in production unless `SWAGGER_ENABLED=true`.
 
 ---
 
@@ -57,12 +64,12 @@ The system implements a secure **Access/Refresh Token** strategy:
 
 ### 1. Validation (Zod)
 
-We use a custom `ZodValidationPipe` (or equivalent) to ensure all incoming `Body`, `Query`, and `Param` data matches our shared validators.
+A global `ZodValidationPipe` (from `nestjs-zod`) validates every DTO created with `createZodDto` from the shared schemas in `@repo/validators`. Route IDs are validated with `ParseUUIDPipe`.
 
 ### 2. Exception Filters
 
 - `ZodExceptionFilter`: Catches validation errors and returns a 400 Bad Request with detailed field-level errors.
-- `HttpExceptionFilter`: Normalizes all other HTTP errors into a clean, developer-friendly format.
+- `GlobalExceptionFilter`: Normalizes all other errors into a clean, developer-friendly format (500s never leak internal messages).
 
 ### 3. Interceptors
 
@@ -75,8 +82,10 @@ We use a custom `ZodValidationPipe` (or equivalent) to ensure all incoming `Body
 
 The API uses [Prisma ORM](https://www.prisma.io/) via the `@repo/database` package.
 
-- **PrismaService**: A global provider that manages the database connection.
-- **Transactions**: Used for complex operations (like registration + token creation) to ensure data integrity.
+- **PrismaService**: A single global provider (one connection pool) built on the Prisma 7 PostgreSQL driver adapter.
+- **Transactions**: Used for multi-step writes (password reset, reset-token issuance) to ensure data integrity.
+- **Migrations**: Schema changes are versioned SQL migrations in `packages/database/prisma/migrations`, applied with `pnpm --filter @repo/database db:deploy`.
+- **Health**: `GET /health` (liveness) and `GET /health/ready` (database connectivity) for load balancers.
 
 ---
 
@@ -84,23 +93,25 @@ The API uses [Prisma ORM](https://www.prisma.io/) via the `@repo/database` packa
 
 ### Auth Module
 
-| Method | Endpoint         | Description              | Auth Required       |
-| :----- | :--------------- | :----------------------- | :------------------ |
-| `POST` | `/auth/register` | Register a new user      | No                  |
-| `POST` | `/auth/login`    | Login and get tokens     | No                  |
-| `POST` | `/auth/refresh`  | Rotate refresh tokens    | Yes (Refresh Token) |
-| `GET`  | `/auth/me`       | Get current user profile | Yes (Access Token)  |
-| `POST` | `/auth/logout`   | Invalidate session       | Yes (Access Token)  |
+| Method | Endpoint                | Description              | Auth Required       |
+| :----- | :---------------------- | :----------------------- | :------------------ |
+| `POST` | `/auth/register`        | Register a new user      | No                  |
+| `POST` | `/auth/login`           | Login and get tokens     | No                  |
+| `POST` | `/auth/refresh`         | Rotate refresh tokens    | Yes (Refresh Token) |
+| `GET`  | `/auth/me`              | Get current user profile | Yes (Access Token)  |
+| `POST` | `/auth/logout`          | Revoke a refresh token   | No (token in body)  |
+| `POST` | `/auth/forgot-password` | Request a reset link     | No                  |
+| `POST` | `/auth/reset-password`  | Set a new password       | No                  |
 
 ### Projects Module
 
 | Method   | Endpoint        | Description          | Auth Required |
 | :------- | :-------------- | :------------------- | :------------ |
-| `GET`    | `/projects`     | List all projects    | Yes           |
+| `GET`    | `/projects`     | List all projects    | No            |
 | `POST`   | `/projects`     | Create a new project | Yes           |
-| `GET`    | `/projects/:id` | Get project details  | Yes           |
-| `PATCH`  | `/projects/:id` | Update a project     | Yes           |
-| `DELETE` | `/projects/:id` | Delete a project     | Yes           |
+| `GET`    | `/projects/:id` | Get project details  | No            |
+| `PUT`    | `/projects/:id` | Update a project     | Yes (owner)   |
+| `DELETE` | `/projects/:id` | Delete a project     | Yes (owner)   |
 
 ---
 
@@ -112,6 +123,14 @@ The API uses [Prisma ORM](https://www.prisma.io/) via the `@repo/database` packa
 2. Define the `Controller`, `Service`, and `Module`.
 3. Register the module in `app.module.ts`.
 4. (Optional) Create DTOs using shared validators from `@repo/validators`.
+5. Add unit tests next to the service (`*.spec.ts`) and, for HTTP flows, e2e tests in `test/`.
+
+### Testing
+
+```bash
+pnpm --filter api test        # unit tests (Jest, native ESM)
+pnpm --filter api test:e2e    # needs DATABASE_URL, JWT secrets and migrated schema
+```
 
 ### Running the API
 

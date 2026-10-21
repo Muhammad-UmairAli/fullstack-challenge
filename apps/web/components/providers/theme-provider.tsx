@@ -1,8 +1,12 @@
 'use client';
 
 import * as React from 'react';
-
-type Theme = 'dark' | 'light';
+import {
+  DEFAULT_THEME,
+  THEME_STORAGE_KEY,
+  themeClassName,
+  type Theme,
+} from '../../lib/theme';
 
 type ThemeContextType = {
   theme: Theme;
@@ -14,33 +18,55 @@ const ThemeContext = React.createContext<ThemeContextType | undefined>(
   undefined,
 );
 
-const STORAGE_KEY = 'portfolio-theme';
+// The theme class on <html> is the external store: themeInitScript sets it
+// before hydration and setTheme updates it, so components subscribe to it via
+// useSyncExternalStore instead of copying storage into state in an effect.
+const listeners = new Set<() => void>();
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot(): Theme {
+  return document.documentElement.classList.contains(themeClassName('light'))
+    ? 'light'
+    : 'dark';
+}
+
+// The server cannot see localStorage. Hydration renders with the default and
+// React re-renders immediately if the class says otherwise.
+function getServerSnapshot(): Theme {
+  return DEFAULT_THEME;
+}
+
+function setTheme(nextTheme: Theme) {
+  try {
+    window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+  } catch {
+    // Storage blocked (private mode, site data disabled): still switch the theme
+    // for this page view, it just will not persist.
+  }
+  document.documentElement.classList.remove(
+    themeClassName('light'),
+    themeClassName('dark'),
+  );
+  document.documentElement.classList.add(themeClassName(nextTheme));
+  listeners.forEach((listener) => listener());
+}
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = React.useState<Theme>('dark');
-
-  React.useEffect(() => {
-    const savedTheme = window.localStorage.getItem(STORAGE_KEY) as Theme | null;
-    const initialTheme = savedTheme ?? 'dark';
-    setThemeState(initialTheme);
-    document.documentElement.classList.remove('theme-light', 'theme-dark');
-    document.documentElement.classList.add(
-      initialTheme === 'light' ? 'theme-light' : 'theme-dark',
-    );
-  }, []);
-
-  const setTheme = React.useCallback((nextTheme: Theme) => {
-    setThemeState(nextTheme);
-    window.localStorage.setItem(STORAGE_KEY, nextTheme);
-    document.documentElement.classList.remove('theme-light', 'theme-dark');
-    document.documentElement.classList.add(
-      nextTheme === 'light' ? 'theme-light' : 'theme-dark',
-    );
-  }, []);
+  const theme = React.useSyncExternalStore(
+    subscribe,
+    getSnapshot,
+    getServerSnapshot,
+  );
 
   const toggleTheme = React.useCallback(() => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
-  }, [setTheme, theme]);
+  }, [theme]);
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>

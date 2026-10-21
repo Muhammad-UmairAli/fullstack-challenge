@@ -6,9 +6,8 @@ import type { ProjectInput } from '@repo/validators';
 export class ProjectsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll(userId?: string) {
+  async findAll() {
     return this.prisma.project.findMany({
-      where: userId ? { userId } : {},
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -35,11 +34,7 @@ export class ProjectsService {
   }
 
   async update(id: string, userId: string, data: ProjectInput) {
-    const project = await this.findOne(id);
-
-    if (project.userId !== userId) {
-      throw new NotFoundException('Project not found or access denied');
-    }
+    await this.assertOwnership(id, userId);
 
     return this.prisma.project.update({
       where: { id },
@@ -48,16 +43,23 @@ export class ProjectsService {
   }
 
   async remove(id: string, userId: string) {
-    const project = await this.findOne(id);
-
-    if (project.userId !== userId) {
-      throw new NotFoundException('Project not found or access denied');
-    }
+    await this.assertOwnership(id, userId);
 
     await this.prisma.project.delete({
       where: { id },
     });
 
     return { message: 'Project deleted successfully' };
+  }
+
+  /**
+   * Responds 404 (not 403) for other users' projects so IDs cannot be probed.
+   */
+  private async assertOwnership(id: string, userId: string) {
+    const project = await this.findOne(id);
+
+    if (project.userId !== userId) {
+      throw new NotFoundException('Project not found');
+    }
   }
 }

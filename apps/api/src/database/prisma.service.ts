@@ -4,23 +4,31 @@ import {
   type OnModuleDestroy,
   Logger,
 } from '@nestjs/common';
-import { PrismaClient, securityExtension } from '@repo/database';
+import { ConfigService } from '@nestjs/config';
+import {
+  PrismaClient,
+  createPrismaClientOptions,
+  type DatabaseClientOptions,
+} from '@repo/database';
+import type { Env } from '../common/configs/env.validation.js';
 
+/**
+ * Injectable Prisma client. User passwords are omitted from results by default
+ * (see @repo/database); select them explicitly only where they are verified.
+ */
 @Injectable()
 export class PrismaService
-  extends PrismaClient
+  extends PrismaClient<DatabaseClientOptions>
   implements OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger(PrismaService.name);
 
-  /**
-   * 🔐 Security Extension
-   * Applies the shared security extension for query filtering and safety.
-   */
-  public readonly client = this.$extends(securityExtension);
-
-  constructor() {
-    super();
+  constructor(configService: ConfigService<Env, true>) {
+    super(
+      createPrismaClientOptions({
+        connectionString: configService.get('DATABASE_URL', { infer: true }),
+      }),
+    );
   }
 
   async onModuleInit() {

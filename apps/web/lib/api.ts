@@ -4,125 +4,139 @@ import type {
   ForgotPasswordInput,
   ResetPasswordInput,
 } from '@repo/validators';
+import { headers } from 'next/headers';
 import { env } from '../env';
+import type { AuthTokens } from './auth-cookies';
 
 /**
- * 🌐 CORE API CLIENT
- * This is the single source of truth for all backend communication.
+ * CORE API CLIENT (server-side only)
+ * Used by Server Actions, Server Components and the proxy (BFF pattern). The browser
+ * never calls the API directly because tokens live in HttpOnly cookies.
  * It handles:
- * 1. Base URL management (Server vs Client side) via strict env validation
- * 2. Standardized error parsing
- * 3. Token injection (for server actions)
+ * 1. Base URL management via strict env validation
+ * 2. Standardized error parsing, timeouts and non-JSON responses
+ * 3. Token injection and client IP forwarding (for API rate limiting)
  */
 
-const getApiBaseUrl = () =>
-  typeof window === 'undefined' ? env.API_URL : env.NEXT_PUBLIC_API_URL;
+const REQUEST_TIMEOUT_MS = 10_000;
 
 export type ApiResponse<T> = {
   success: boolean;
   data: T;
   message?: string;
   errors?: Record<string, string>;
+  status?: number;
 };
 
-class ApiClient {
-  private async request<T>(
-    path: string,
-    options: RequestInit = {},
-  ): Promise<ApiResponse<T>> {
-    const url = `${getApiBaseUrl()}${path}`;
+type ApiEnvelope<T> = {
+  success?: boolean;
+  data?: T;
+  message?: string;
+  errors?: Record<string, string>;
+};
 
-    const headers = new Headers(options.headers);
-    if (!headers.has('Content-Type')) {
-      headers.set('Content-Type', 'application/json');
-    }
+export type SessionUser = { id: string; email: string; name: string | null };
 
-    try {
-      const response = await fetch(url, {
-        ...options,
-        headers,
-      });
+/**
+ * Forwards the end user's IP so the API can rate-limit per client instead of
+ * per Next.js server. Only honoured by the API when TRUST_PROXY is configured.
+ */
+async function forwardedForHeader(): Promise<Record<string, string>> {
+  try {
+    const incoming = await headers();
+    const forwardedFor =
+      incoming.get('x-forwarded-for') ?? incoming.get('x-real-ip');
+    return forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {};
+  } catch {
+    // Outside a request scope (e.g. during build); nothing to forward.
+    return {};
+  }
+}
 
-      const result = (await response.json()) as {
-        success?: boolean;
-        data?: T;
-        message?: string;
-        errors?: Record<string, string>;
-      };
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<ApiResponse<T>> {
+  const url = `${env.API_URL}${path}`;
 
-      if (!response.ok) {
-        // Standardized error parsing from our NestJS Zod filter
-        return {
-          success: false,
-          data: null as unknown as T,
-          message: result.message || 'An unexpected error occurred',
-          errors: result.errors,
-        };
-      }
-
-      return {
-        success: true,
-        data: result.data as T,
-        message: result.message,
-      };
-    } catch {
-      return {
-        success: false,
-        data: null as unknown as T,
-        message: 'Network error. Please check your connection.',
-      };
+  const requestHeaders = new Headers(options.headers);
+  if (!requestHeaders.has('Content-Type')) {
+    requestHeaders.set('Content-Type', 'application/json');
+  }
+  if (!requestHeaders.has('X-Forwarded-For')) {
+    for (const [key, value] of Object.entries(await forwardedForHeader())) {
+      requestHeaders.set(key, value);
     }
   }
 
-  // Auth Endpoints
-  auth = {
-    register: (data: RegisterInput) =>
-      this.request<unknown>('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      ...options,
+      headers: requestHeaders,
+      cache: 'no-store',
+      signal: options.signal ?? AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch {
+    return {
+      success: false,
+      data: null as unknown as T,
+      message: 'Unable to reach the server. Please try again.',
+    };
+  }
 
-    login: (data: LoginInput) =>
-      this.request<{ accessToken: string; refreshToken?: string }>(
-        '/auth/login',
-        {
-          method: 'POST',
-          body: JSON.stringify(data),
-        },
-      ),
+  // Non-JSON bodies (e.g. a proxy's HTML 502 page) must not crash the caller.
+  const result = (await response.json().catch(() => ({}))) as ApiEnvelope<T>;
 
-    refresh: (refreshToken: string) =>
-      this.request<{ accessToken: string; refreshToken?: string }>(
-        '/auth/refresh',
-        {
-          method: 'POST',
-          body: JSON.stringify({ refreshToken }),
-        },
-      ),
+  if (!response.ok) {
+    // Standardized error parsing from our NestJS Zod filter
+    return {
+      success: false,
+      data: null as unknown as T,
+      message: result.message || 'An unexpected error occurred',
+      errors: result.errors,
+      status: response.status,
+    };
+  }
 
-    logout: (refreshToken?: string) =>
-      this.request<{ message: string }>('/auth/logout', {
-        method: 'POST',
-        body: JSON.stringify({ refreshToken }),
-      }),
-
-    forgotPassword: (data: ForgotPasswordInput) =>
-      this.request<{ message: string }>('/auth/forgot-password', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
-
-    resetPassword: (data: ResetPasswordInput) =>
-      this.request<{ message: string }>('/auth/reset-password', {
-        method: 'POST',
-        body: JSON.stringify(data),
-      }),
-
-    getMe: (token: string) =>
-      this.request<unknown>('/auth/me', {
-        headers: { Authorization: `Bearer ${token}` },
-      }),
+  return {
+    success: true,
+    data: result.data as T,
+    message: result.message,
+    status: response.status,
   };
 }
 
-export const api = new ApiClient();
+function post<T>(path: string, body: unknown, init: RequestInit = {}) {
+  return request<T>(path, {
+    ...init,
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
+}
+
+export const api = {
+  auth: {
+    register: (data: RegisterInput) =>
+      post<SessionUser>('/auth/register', data),
+
+    login: (data: LoginInput) => post<AuthTokens>('/auth/login', data),
+
+    refresh: (refreshToken: string, init?: RequestInit) =>
+      post<AuthTokens>('/auth/refresh', { refreshToken }, init),
+
+    logout: (refreshToken?: string) =>
+      post<{ message: string }>('/auth/logout', { refreshToken }),
+
+    forgotPassword: (data: ForgotPasswordInput) =>
+      post<{ message: string }>('/auth/forgot-password', data),
+
+    resetPassword: (data: ResetPasswordInput) =>
+      post<{ message: string }>('/auth/reset-password', data),
+
+    getMe: (token: string) =>
+      request<SessionUser>('/auth/me', {
+        headers: { Authorization: `Bearer ${token}` },
+      }),
+  },
+};

@@ -1,6 +1,6 @@
 # 🎨 Frontend Documentation (Next.js Web App)
 
-Welcome to the detailed frontend documentation for the **Fullstack Enterprise Architecture**. This application is built with [Next.js 15](https://nextjs.org/), [React 19](https://react.dev/), and [Tailwind CSS 4.0](https://tailwindcss.com/).
+Welcome to the detailed frontend documentation for the **Fullstack Enterprise Architecture**. This application is built with [Next.js 16](https://nextjs.org/), [React 19](https://react.dev/), and [Tailwind CSS 4.0](https://tailwindcss.com/).
 
 ---
 
@@ -31,10 +31,11 @@ apps/web/
 │   ├── providers/       # Context providers (Theme, Auth)
 │   └── ui/              # Generic UI components (Buttons, Inputs)
 ├── lib/                 # Shared utilities and API clients
-│   ├── api.ts           # Fetch wrapper for the backend API
+│   ├── api.ts           # Server-side fetch wrapper for the backend API
+│   ├── auth-cookies.ts  # Session cookie names, flags and lifetimes
 │   ├── auth-server.ts   # Server-side auth utilities
 │   └── utils.ts         # Tailwind merging and generic helpers
-└── middleware.ts        # Route protection and token refreshing
+└── proxy.ts             # Route protection and token refreshing (Next 16 "proxy", formerly middleware)
 ```
 
 ---
@@ -45,15 +46,15 @@ We implement a sophisticated authentication system that handles tokens securely:
 
 ### 1. Login/Register
 
-Users submit forms which trigger **Server Actions** (`app/actions/auth.actions.ts`). These actions call the backend API, receive JWTs, and set them as `HttpOnly` cookies.
+Users submit forms which trigger **Server Actions** (`app/actions/auth.actions.ts`). Server Actions are public HTTP endpoints, so each one re-validates its input with the shared schema before calling the API. On success they set the JWTs as `HttpOnly` cookies via `lib/auth-cookies.ts`, with cookie lifetimes taken from each token's `exp` claim. If "Keep me signed in" is unchecked, the refresh cookie lasts only for the browser session.
 
-### 2. Route Protection (`middleware.ts`)
+### 2. Route Protection (`proxy.ts`)
 
-The Next.js middleware checks for the presence of a session cookie before allowing access to protected routes (e.g., `/dashboard`). If a token is expired, it attempts a background refresh.
+The proxy runs on the Node.js runtime before every page. It optimistically checks for the session cookies; every route except the auth pages (and anything added to `PUBLIC_ROUTES`) requires a session. Signed-in users are redirected away from auth pages by `app/(auth)/layout.tsx`, which verifies the session with the API instead of trusting cookie presence. If a refresh fails because the API is unreachable, overloaded or rate-limiting, the proxy answers 503 with `Retry-After` and keeps the cookies, so a reload resumes the session; only an explicit rejection clears them and redirects to `/login` (which returns the user to the requested page after sign-in). `/reset-password` sits outside the `(auth)` group so a reset link works even in a signed-in browser. If the access token has expired but a refresh token exists, it rotates the tokens with the API and writes the new cookies both to the response (for the browser) and to the forwarded request (so Server Components in the same request see them). The API still verifies every token, so pages and actions must not rely on the proxy alone.
 
 ### 3. Client-Side Auth State
 
-The `AuthProvider` (`components/providers/auth-provider.tsx`) provides the current user's state to client components, allowing for dynamic UI updates (e.g., showing a logout button).
+The `SessionProvider` (`components/providers/session-provider.tsx`) exposes the user loaded by `getServerSession()` in the root layout through the `useUser()` hook.
 
 ---
 
@@ -77,7 +78,7 @@ Components in `components/ui` are designed to be highly reusable and composable,
 
 We use two primary methods for data interaction:
 
-1. **Server-Side Fetching**: Using the `api.ts` client within Server Components to fetch data during SSR.
+1. **Server-Side Fetching**: Using the `api.ts` client within Server Components to fetch data during SSR. It forwards the visitor's IP (`X-Forwarded-For`) so API rate limits apply per user, and times out after 10 seconds.
 2. **Server Actions**: For all POST/PATCH/DELETE operations, ensuring that the client never directly handles raw tokens.
 
 ---
@@ -95,6 +96,10 @@ We use two primary methods for data interaction:
 1. Define the action in `app/actions/`.
 2. Use shared validators from `@repo/validators` to validate the input.
 3. Use `revalidatePath` to refresh the UI after a successful mutation.
+
+### Testing
+
+`pnpm --filter web test` runs Jest through `next/jest` (unit tests for the proxy and cookie helpers live next to the code as `*.test.ts`).
 
 ### Running the Frontend
 

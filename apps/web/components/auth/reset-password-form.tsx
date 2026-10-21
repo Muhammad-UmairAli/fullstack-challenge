@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { ResetPasswordSchema } from '@repo/validators';
 import type { ResetPasswordInput } from '@repo/validators';
@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { resetPasswordAction } from '../../app/actions/auth.actions';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 
 interface ResetPasswordFormProps {
@@ -28,14 +28,14 @@ export function ResetPasswordForm({ token }: ResetPasswordFormProps) {
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     formState: { errors },
   } = useForm<ResetPasswordInput>({
     resolver: zodResolver(ResetPasswordSchema),
     defaultValues: { token },
   });
 
-  const passwordValue = watch('password') ?? '';
+  const passwordValue = useWatch({ control, name: 'password' }) ?? '';
 
   const getPasswordStrength = (password: string) => {
     let score = 0;

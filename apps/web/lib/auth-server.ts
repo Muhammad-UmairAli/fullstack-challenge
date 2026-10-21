@@ -1,28 +1,29 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
-import { api } from './api';
+import { api, type SessionUser } from './api';
+import { ACCESS_TOKEN_COOKIE } from './auth-cookies';
 
 /**
- * 🔒 SERVER-SIDE AUTH UTILITY
+ * SERVER-SIDE AUTH UTILITY
  * This utility allows Server Components to securely fetch the current session
  * without exposing tokens to the client.
  */
+// cache(): the root layout and auth layout share one /auth/me call per request.
+export const getServerSession = cache(
+  async function getServerSession(): Promise<SessionUser | null> {
+    const cookieStore = await cookies();
+    const token = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
 
-export async function getServerSession() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get('access_token')?.value;
-
-  if (!token) {
-    return null;
-  }
-
-  try {
-    const result = await api.auth.getMe(token);
-    if (result.success && result.data) {
-      // Cast the unknown data to the expected session user type
-      return result.data as { id: string; email: string; name?: string };
+    if (!token) {
+      return null;
     }
-    return null;
-  } catch {
-    return null;
-  }
-}
+
+    const result = await api.auth.getMe(token);
+    if (!result.success || !result.data) {
+      return null;
+    }
+
+    const { id, email, name } = result.data;
+    return { id, email, name };
+  },
+);

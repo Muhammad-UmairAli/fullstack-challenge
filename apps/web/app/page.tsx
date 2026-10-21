@@ -1,11 +1,11 @@
 'use client';
 
-import { motion, type Variants } from 'framer-motion';
+import { motion, type Variants } from 'motion/react';
 import { logoutAction } from './actions/auth.actions';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '../components/ui/theme-toggle';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 
 // ═══════════════════════════════════════════
 // MINIMALIST ANIMATION VARIANTS
@@ -20,6 +20,16 @@ const fastFade: Variants = {
     transition: { duration: 0.8, ease: 'easeOut' as const },
   },
 };
+
+// False during SSR and hydration, true once hydrated. Gates the randomly
+// generated starfield to the client without a mount effect.
+const subscribeToNothing = () => () => {};
+const useIsClient = () =>
+  useSyncExternalStore(
+    subscribeToNothing,
+    () => true,
+    () => false,
+  );
 
 const MouseSpotlight = ({ x, y }: { x: number; y: number }) => (
   <motion.div
@@ -50,18 +60,17 @@ const StarLayer = ({
   parallaxFactor: number;
   isLaunching: boolean;
 }) => {
-  const [stars, setStars] = useState('');
-
-  useEffect(() => {
-    const generated = Array.from({ length: count })
+  // Generated once per mount. Starfield only mounts layers on the client, so the
+  // random positions never have to match a server render.
+  const [stars] = useState(() =>
+    Array.from({ length: count })
       .map(() => {
         const x = Math.floor(Math.random() * 3000);
         const y = Math.floor(Math.random() * 3000);
         return `${x}px ${y}px var(--text-primary)`;
       })
-      .join(', ');
-    setStars(generated);
-  }, [count]);
+      .join(', '),
+  );
 
   return (
     <motion.div
@@ -92,22 +101,16 @@ const StarLayer = ({
 };
 
 const ShootingStar = () => {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  const config = useMemo(
-    () => ({
-      top: Math.random() * 70,
-      left: Math.random() * 80,
-      duration: Math.random() * 1.2 + 0.6,
-      delay: Math.random() * 10,
-      angle: Math.random() * 20 - 55, // -35 to -55 range
-      length: Math.random() * 150 + 100,
-    }),
-    [],
-  );
-
-  if (!mounted) return null;
+  // Client-only (see Starfield), so lazy state can hold the random config.
+  const [config] = useState(() => ({
+    top: Math.random() * 70,
+    left: Math.random() * 80,
+    duration: Math.random() * 1.2 + 0.6,
+    delay: Math.random() * 10,
+    angle: Math.random() * 20 - 55, // -35 to -55 range
+    length: Math.random() * 150 + 100,
+    repeatDelay: Math.random() * 15 + 8,
+  }));
 
   return (
     <motion.div
@@ -120,7 +123,7 @@ const ShootingStar = () => {
       transition={{
         duration: config.duration,
         repeat: Infinity,
-        repeatDelay: Math.random() * 15 + 8,
+        repeatDelay: config.repeatDelay,
         ease: 'easeOut',
       }}
       className="absolute h-px bg-linear-to-r from-transparent via-(--accent)/80 to-transparent"
@@ -143,43 +146,42 @@ const Starfield = ({
   y: number;
   isLaunching: boolean;
 }) => {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const isClient = useIsClient();
 
   return (
     <div className="fixed inset-0 -z-20 overflow-hidden">
-      <StarLayer
-        size={1}
-        opacity={0.3}
-        speed={300}
-        count={600}
-        mouseX={x}
-        mouseY={y}
-        parallaxFactor={-0.01}
-        isLaunching={isLaunching}
-      />
-      <StarLayer
-        size={1.5}
-        opacity={0.5}
-        speed={200}
-        count={250}
-        mouseX={x}
-        mouseY={y}
-        parallaxFactor={-0.02}
-        isLaunching={isLaunching}
-      />
-      <StarLayer
-        size={2}
-        opacity={0.6}
-        speed={120}
-        count={60}
-        mouseX={x}
-        mouseY={y}
-        parallaxFactor={-0.04}
-        isLaunching={isLaunching}
-      />
-      {mounted && (
+      {isClient && (
         <>
+          <StarLayer
+            size={1}
+            opacity={0.3}
+            speed={300}
+            count={600}
+            mouseX={x}
+            mouseY={y}
+            parallaxFactor={-0.01}
+            isLaunching={isLaunching}
+          />
+          <StarLayer
+            size={1.5}
+            opacity={0.5}
+            speed={200}
+            count={250}
+            mouseX={x}
+            mouseY={y}
+            parallaxFactor={-0.02}
+            isLaunching={isLaunching}
+          />
+          <StarLayer
+            size={2}
+            opacity={0.6}
+            speed={120}
+            count={60}
+            mouseX={x}
+            mouseY={y}
+            parallaxFactor={-0.04}
+            isLaunching={isLaunching}
+          />
           <ShootingStar />
           <ShootingStar />
           <ShootingStar />

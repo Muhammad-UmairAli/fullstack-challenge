@@ -1,10 +1,10 @@
 # Fullstack Challenge Web (Next.js)
 
-The modern, high-performance frontend for the Fullstack Challenge project, built with Next.js 15 and Tailwind CSS 4.
+The modern, high-performance frontend for the Fullstack Challenge project, built with Next.js 16 and Tailwind CSS 4.
 
 ## 🚀 Key Features
 
-- **Next.js 15 (App Router)**: Leveraging the latest features for server-side rendering and performance.
+- **Next.js 16 (App Router)**: Leveraging the latest features for server-side rendering and performance.
 - **Tailwind CSS 4.0**: Modern, CSS-first utility styling.
 - **Fullstack Type Safety**: Directly imports Zod schemas and TypeScript types from `@repo/validators`.
 - **Shared Contracts**: Ensures the frontend validation is always in perfect sync with the `@api/v1` backend.
@@ -41,6 +41,9 @@ pnpm build --filter web
 To use a shared validator in a form:
 
 ```typescript
-import { CreateExampleSchema } from '@repo/validators';
-// Use with react-hook-form and @hookform/resolvers/zod!
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { LoginSchema, type LoginInput } from '@repo/validators';
+
+const form = useForm<LoginInput>({ resolver: zodResolver(LoginSchema) });
 ```

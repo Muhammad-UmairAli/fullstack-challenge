@@ -16,8 +16,8 @@ This directory contains detailed technical documentation for the **Fullstack Ent
 ## 🚀 Quick Links
 
 - [Root README.md](../README.md) - Project setup and high-level overview.
-- [Shared Validators](../../packages/validators/README.md) - Data contracts and validation logic.
-- [Database Schema](../../packages/database/prisma/schema.prisma) - Prisma models and migrations.
+- [Shared Validators](../packages/validators/src/index.ts) - Data contracts and validation logic.
+- [Database Schema](../packages/database/prisma/schema.prisma) - Prisma models; migrations live in `../packages/database/prisma/migrations`.
 
 ---
 

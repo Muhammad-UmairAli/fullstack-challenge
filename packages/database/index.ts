@@ -1,15 +1,7 @@
-import { PrismaClient } from '@prisma/client';
-import { securityExtension } from './src/extensions/security.extension.js';
-
-export * from '@prisma/client';
-export * from './src/extensions/security.extension.js';
-
 /**
- * Shared Prisma Client with Security Extensions
+ * @repo/database public API.
+ * Import Prisma types and the client factory from here, never from the
+ * generated folder directly, so the generator location can change freely.
  */
-export const prisma = new PrismaClient().$extends(securityExtension);
-
-/**
- * We also export a type-safe version of the extended client
- */
-export type ExtendedPrismaClient = typeof prisma;
+export * from './src/generated/prisma/client.js';
+export * from './src/client.js';

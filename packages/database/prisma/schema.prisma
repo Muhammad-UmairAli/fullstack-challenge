@@ -1,22 +1,22 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// Prisma schema: https://pris.ly/d/prisma-schema
+// The connection URL lives in prisma.config.ts (Prisma 7+).
 
 generator client {
-  provider = "prisma-client-js"
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
+  /// argon2 hash. Omitted from query results by default (see src/client.ts).
   password  String
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
@@ -29,21 +29,30 @@ model User {
 
 model PasswordResetToken {
   id        String   @id @default(uuid())
+  /// SHA-256 hash of the reset token; the raw token is only ever sent to the user.
   token     String   @unique
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model RefreshToken {
   id        String   @id @default(uuid())
+  /// SHA-256 hash of the refresh JWT; the raw token is never stored.
   token     String   @unique
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   isRevoked Boolean  @default(false)
+  /// Set when the token was revoked by rotation (exchanged for a new pair), as opposed
+  /// to logout or a password reset. Lets refresh tell concurrent use from replay.
+  rotatedAt DateTime?
   expiresAt DateTime
   createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Project {
@@ -58,5 +67,7 @@ model Project {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
-}
 
+  @@index([userId])
+  @@index([createdAt])
+}

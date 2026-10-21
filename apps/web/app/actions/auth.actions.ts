@@ -1,18 +1,33 @@
 'use server';
 
 import { cookies } from 'next/headers';
-import { api } from '../../lib/api';
+import type { z } from 'zod';
+import {
+  LoginSchema,
+  RegisterSchema,
+  ForgotPasswordSchema,
+  ResetPasswordSchema,
+} from '@repo/validators';
 import type {
   LoginInput,
   RegisterInput,
   ForgotPasswordInput,
   ResetPasswordInput,
 } from '@repo/validators';
+import { api, type ApiResponse } from '../../lib/api';
+import {
+  REFRESH_TOKEN_COOKIE,
+  clearAuthCookies,
+  setAuthCookies,
+} from '../../lib/auth-cookies';
 
 /**
- * 🔒 SERVER ACTIONS: Secure Authentication
+ * SERVER ACTIONS: Secure Authentication
  * These actions run ONLY on the server, keeping sensitive logic
  * and HttpOnly cookies away from the client-side XSS risks.
+ *
+ * Server Actions are public HTTP endpoints, so every input is re-validated here
+ * even though the forms validate client-side.
  */
 
 export type ActionResponse = {
@@ -21,72 +36,77 @@ export type ActionResponse = {
   errors?: Record<string, string>;
 };
 
-export async function loginAction(data: LoginInput): Promise<ActionResponse> {
-  const result = await api.auth.login(data);
-
-  if (result.success && result.data) {
-    const cookieStore = await cookies();
-
-    // BFF (Backend-For-Frontend) Cookie Management
-    // Set HttpOnly cookies for session management.
-
-    // 1. Short-lived Access Token (e.g., 15m)
-    cookieStore.set('access_token', result.data.accessToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 15 * 60, // 15 minutes
-      path: '/',
-    });
-
-    // 2. Long-lived Refresh Token (e.g., 7d)
-    if (result.data.refreshToken) {
-      cookieStore.set('refresh_token', result.data.refreshToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict', // Strict to prevent CSRF on refresh
-        maxAge: 7 * 24 * 60 * 60, // 7 days
-        path: '/',
-      });
-    }
-
-    return { success: true };
+function invalidInput(error: z.ZodError): ActionResponse {
+  const errors: Record<string, string> = {};
+  for (const issue of error.issues) {
+    errors[issue.path.join('.')] ??= issue.message;
   }
+  return { success: false, message: 'Validation failed', errors };
+}
 
+// Strips API payloads (e.g. user records) so only the action contract reaches the client.
+function toActionResponse(result: ApiResponse<unknown>): ActionResponse {
   return {
-    success: false,
+    success: result.success,
     message: result.message,
     errors: result.errors,
   };
 }
 
+export async function loginAction(
+  data: LoginInput,
+  options?: { rememberMe?: boolean } | null,
+): Promise<ActionResponse> {
+  const parsed = LoginSchema.safeParse(data);
+  if (!parsed.success) return invalidInput(parsed.error);
+
+  const result = await api.auth.login(parsed.data);
+
+  if (result.success && result.data) {
+    // BFF (Backend-For-Frontend) cookie management: tokens never reach client JS.
+    // Client-controlled input: only an explicit `false` opts out of persistence.
+    setAuthCookies(await cookies(), result.data, {
+      persistent: options?.rememberMe !== false,
+    });
+    return { success: true };
+  }
+
+  return toActionResponse(result);
+}
+
 export async function registerAction(
   data: RegisterInput,
 ): Promise<ActionResponse> {
-  const result = await api.auth.register(data);
-  return result;
+  const parsed = RegisterSchema.safeParse(data);
+  if (!parsed.success) return invalidInput(parsed.error);
+
+  return toActionResponse(await api.auth.register(parsed.data));
 }
 
 export async function logoutAction(): Promise<ActionResponse> {
   const cookieStore = await cookies();
-  const refreshToken = cookieStore.get('refresh_token')?.value;
+  const refreshToken = cookieStore.get(REFRESH_TOKEN_COOKIE)?.value;
 
+  // Clear cookies even if the API call fails; the session must end locally regardless.
   await api.auth.logout(refreshToken);
-  cookieStore.delete('access_token');
-  cookieStore.delete('refresh_token');
+  clearAuthCookies(cookieStore);
   return { success: true };
 }
 
 export async function forgotPasswordAction(
   data: ForgotPasswordInput,
 ): Promise<ActionResponse> {
-  const result = await api.auth.forgotPassword(data);
-  return result;
+  const parsed = ForgotPasswordSchema.safeParse(data);
+  if (!parsed.success) return invalidInput(parsed.error);
+
+  return toActionResponse(await api.auth.forgotPassword(parsed.data));
 }
 
 export async function resetPasswordAction(
   data: ResetPasswordInput,
 ): Promise<ActionResponse> {
-  const result = await api.auth.resetPassword(data);
-  return result;
+  const parsed = ResetPasswordSchema.safeParse(data);
+  if (!parsed.success) return invalidInput(parsed.error);
+
+  return toActionResponse(await api.auth.resetPassword(parsed.data));
 }

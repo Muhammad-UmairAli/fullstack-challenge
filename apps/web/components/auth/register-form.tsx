@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { RegisterSchema } from '@repo/validators';
 import type { RegisterInput } from '@repo/validators';
@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { registerAction } from '../../app/actions/auth.actions';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Eye, EyeOff } from 'lucide-react';
 
 /**
@@ -28,13 +28,13 @@ export function RegisterForm() {
     register,
     handleSubmit,
     setError,
-    watch,
+    control,
     formState: { errors },
   } = useForm<RegisterInput>({
     resolver: zodResolver(RegisterSchema),
   });
 
-  const passwordValue = watch('password') ?? '';
+  const passwordValue = useWatch({ control, name: 'password' }) ?? '';
 
   const getPasswordStrength = (password: string) => {
     let score = 0;

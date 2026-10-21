@@ -1,10 +1,30 @@
 packages:
-  - "apps/*"
-  - "packages/*"
+  - 'apps/*'
+  - 'packages/*'
 
+# Single source of truth for versions shared across workspaces.
+# Reference with "catalog:" in package.json to keep them in lockstep.
 catalog:
-  zod: "^3.24.2"
+  '@types/jest': ^30.0.0
+  '@types/node': ^24.19.2
+  eslint: ^10.13.0
+  jest: ^30.5.2
+  prettier: ^3.9.10
+  typescript: ^6.0.3
+  zod: ^4.6.7
 
+# Install scripts are blocked unless listed here (pnpm 11 fails the install on
+# unreviewed scripts). `false` = reviewed and not needed.
 allowBuilds:
-  argon2: true
+  '@nestjs/core': false # postinstall only prints a funding message
+  '@scarf/scarf': false # install-time telemetry
+  '@parcel/watcher': false # prebuilt binaries ship via optional packages
+  '@prisma/engines': true # downloads the schema engine used by migrate/db commands
+  argon2: true # native addon (prebuilt binary download / node-gyp fallback)
+  prisma: true # preinstall only checks the Node.js version
+  sharp: false # prebuilt binaries ship via optional @img/* packages
+  unrs-resolver: false # prebuilt binaries ship via optional packages
 
+# Supply-chain guard (pnpm 11 default, stated explicitly): never resolve versions
+# published less than 24h ago, which is when most malicious releases are caught.
+minimumReleaseAge: 1440

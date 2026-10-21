@@ -2,17 +2,14 @@
 
 import React, { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
+import type { SessionUser } from '../../lib/api';
 
 /**
  * 👤 SESSION CONTEXT
  * Provides the user profile to all client components in the tree.
  */
 
-type User = {
-  id: string;
-  email: string;
-  name?: string;
-} | null;
+type User = SessionUser | null;
 
 interface SessionContextType {
   user: User;

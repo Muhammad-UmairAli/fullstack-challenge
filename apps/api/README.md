@@ -11,7 +11,7 @@ A NestJS application built with modern standards for security, validation, and o
 
 ### 2. 🛡️ Security & Protection
 
-- **Rate Limiting**: Integrated `ThrottlerModule` to protect against brute-force attacks.
+- **Rate Limiting**: Integrated `ThrottlerModule` to protect against brute-force attacks (configure `TRUST_PROXY` when running behind the web app or a load balancer).
 - **Helmet**: Secured HTTP headers.
 - **CORS**: Environment-driven CORS configuration.
 - **URI Versioning**: Standardized `/api/v1` routes.
@@ -31,7 +31,8 @@ Features are isolated into dedicated domain modules:
 
 ## 🚀 Key Features
 
-- **Swagger Documentation**: Interactive UI at `/api/docs`.
+- **Swagger Documentation**: Interactive UI at `/api/docs` (off in production unless `SWAGGER_ENABLED=true`).
+- **Health Checks**: `/api/v1/health` (liveness) and `/api/v1/health/ready` (database).
 - **Shared Contracts**: Consistent validation via the `@repo/validators` shared package.
 
 ## 🛠️ Development
@@ -52,4 +53,11 @@ pnpm dev --filter api
 
 ```bash
 pnpm build --filter api
+```
+
+### Test
+
+```bash
+pnpm --filter api test        # unit tests
+pnpm --filter api test:e2e    # end-to-end, needs a migrated database
 ```

@@ -1,17 +1,14 @@
 import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { ConfigModule } from '@nestjs/config';
 import { AuthService } from './auth.service.js';
 import { AuthController } from './auth.controller.js';
-import { DatabaseModule } from '../../database/database.module.js';
 import { JwtStrategy } from './strategies/jwt.strategy.js';
 
 @Module({
   imports: [
-    ConfigModule,
-    DatabaseModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
+    // Secrets are passed per call so access and refresh tokens use different keys.
     JwtModule.register({}),
   ],
   providers: [AuthService, JwtStrategy],

@@ -10,14 +10,14 @@ import { Input } from '../ui/input';
 import { loginAction } from '../../app/actions/auth.actions';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Eye, EyeOff } from 'lucide-react';
 
 /**
  * ✨ USER LOGIN
  * Authentication form using Next.js Server Actions.
  */
-export function LoginForm() {
+export function LoginForm({ redirectTo = '/' }: { redirectTo?: string }) {
   const [isLoading, setIsLoading] = React.useState(false);
   const [serverError, setServerError] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
@@ -38,7 +38,7 @@ export function LoginForm() {
     setServerError(null);
 
     try {
-      const result = await loginAction(data);
+      const result = await loginAction(data, { rememberMe });
 
       if (!result.success) {
         // Map backend Zod errors back to form fields
@@ -52,7 +52,7 @@ export function LoginForm() {
         return;
       }
 
-      router.push('/');
+      router.push(redirectTo);
       router.refresh();
     } catch {
       setServerError('A server error occurred. Please try again.');
