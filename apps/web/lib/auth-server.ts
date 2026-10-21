@@ -1,28 +1,25 @@
 import { cookies } from 'next/headers';
-import { api } from './api';
+import { api, type SessionUser } from './api';
+import { ACCESS_TOKEN_COOKIE } from './auth-cookies';
 
 /**
- * 🔒 SERVER-SIDE AUTH UTILITY
+ * SERVER-SIDE AUTH UTILITY
  * This utility allows Server Components to securely fetch the current session
  * without exposing tokens to the client.
  */
-
-export async function getServerSession() {
+export async function getServerSession(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
-  const token = cookieStore.get('access_token')?.value;
+  const token = cookieStore.get(ACCESS_TOKEN_COOKIE)?.value;
 
   if (!token) {
     return null;
   }
 
-  try {
-    const result = await api.auth.getMe(token);
-    if (result.success && result.data) {
-      // Cast the unknown data to the expected session user type
-      return result.data as { id: string; email: string; name?: string };
-    }
-    return null;
-  } catch {
+  const result = await api.auth.getMe(token);
+  if (!result.success || !result.data) {
     return null;
   }
+
+  const { id, email, name } = result.data;
+  return { id, email, name };
 }

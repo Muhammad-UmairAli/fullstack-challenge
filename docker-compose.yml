@@ -1,12 +1,16 @@
-version: '3.8'
+# Local development infrastructure only. Credentials here are throwaway
+# defaults; never reuse them outside your machine.
+name: fullstack-challenge
 
 services:
   postgres:
+    # Major version is pinned: upgrading it requires a dump/restore of the volume.
     image: postgres:15-alpine
     container_name: fullstack-challenge-db
-    restart: always
+    restart: unless-stopped
     ports:
-      - '5433:5432'
+      # Bound to localhost so the database is not reachable from the network.
+      - '127.0.0.1:5433:5432'
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -14,21 +18,22 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d fullstack_challenge"]
+      test: ['CMD-SHELL', 'pg_isready -U postgres -d fullstack_challenge']
       interval: 5s
       timeout: 5s
       retries: 5
 
-  # Optional: A web-based UI for managing your Postgres database
+  # Optional web UI for the database. Start with: docker compose --profile tools up -d
   pgadmin:
-    image: dpage/pgadmin4
+    image: dpage/pgadmin4:latest
     container_name: fullstack-challenge-pgadmin
-    restart: always
+    profiles: ['tools']
+    restart: unless-stopped
     environment:
-      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_EMAIL: admin@example.com
       PGADMIN_DEFAULT_PASSWORD: admin
     ports:
-      - '5050:80'
+      - '127.0.0.1:5050:80'
     depends_on:
       postgres:
         condition: service_healthy

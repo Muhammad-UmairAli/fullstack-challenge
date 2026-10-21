@@ -10,7 +10,7 @@ import { Input } from '../ui/input';
 import { loginAction } from '../../app/actions/auth.actions';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Eye, EyeOff } from 'lucide-react';
 
 /**
@@ -38,7 +38,7 @@ export function LoginForm() {
     setServerError(null);
 
     try {
-      const result = await loginAction(data);
+      const result = await loginAction(data, { rememberMe });
 
       if (!result.success) {
         // Map backend Zod errors back to form fields

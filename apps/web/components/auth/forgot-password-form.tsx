@@ -8,7 +8,7 @@ import type { ForgotPasswordInput } from '@repo/validators';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { forgotPasswordAction } from '../../app/actions/auth.actions';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Mail, CheckCircle2 } from 'lucide-react';
 
 export function ForgotPasswordForm() {

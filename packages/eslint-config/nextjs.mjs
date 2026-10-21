@@ -1,23 +1,27 @@
-import { baseConfig } from "./base.mjs";
-import { FlatCompat } from "@eslint/eslintrc";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { defineConfig } from 'eslint/config';
+import nextVitals from 'eslint-config-next/core-web-vitals';
+import nextTs from 'eslint-config-next/typescript';
+import prettierConfig from 'eslint-config-prettier/flat';
+import { sharedIgnores, sharedRules } from './base.mjs';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-});
-
+/**
+ * ESLint config for Next.js apps. eslint-config-next 16 ships native flat
+ * configs (including typescript-eslint), so no FlatCompat shim is needed.
+ */
 /** @type {import("eslint").Linter.Config[]} */
-export default [
-  ...baseConfig,
-  ...compat.extends("next/core-web-vitals"),
-  ...compat.extends("next/typescript"),
+export default defineConfig(
+  sharedIgnores,
+  nextVitals,
+  nextTs,
+  sharedRules,
   {
+    // React Compiler rules new in eslint-plugin-react-hooks 7 (eslint-config-next 16).
+    // Warn while existing components (mount flags, random values in useMemo) are
+    // migrated; flip back to "error" once `pnpm lint` reports no warnings.
     rules: {
-      "react/react-in-jsx-scope": "off",
+      'react-hooks/set-state-in-effect': 'warn',
+      'react-hooks/purity': 'warn',
     },
   },
-];
+  prettierConfig,
+);

@@ -1,0 +1,27 @@
+version: 2
+updates:
+  # npm covers all pnpm workspaces from the root lockfile.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 10
+    groups:
+      # Batch low-risk updates; majors still arrive as individual PRs for review.
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      # Held back deliberately; see README "Dependency policy".
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: '@eslint/js'
+        update-types: [version-update:semver-major]
+      - dependency-name: '@nestjs/*'
+        update-types: [version-update:semver-major]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

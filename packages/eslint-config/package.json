@@ -9,14 +9,13 @@
     "./node": "./node.mjs"
   },
   "dependencies": {
-    "@eslint/eslintrc": "^3.2.0"
+    "@eslint/js": "^10.0.1",
+    "eslint-config-next": "^16.4.2",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^17.13.0",
+    "typescript-eslint": "^8.72.0"
   },
-  "devDependencies": {
-    "@eslint/js": "^9.0.0",
-    "eslint-config-next": "^15.0.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.1.3",
-    "globals": "^15.0.0",
-    "typescript-eslint": "^8.0.0"
+  "peerDependencies": {
+    "eslint": "^10.0.0"
   }
 }

@@ -9,7 +9,7 @@ import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { resetPasswordAction } from '../../app/actions/auth.actions';
 import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
 
 interface ResetPasswordFormProps {

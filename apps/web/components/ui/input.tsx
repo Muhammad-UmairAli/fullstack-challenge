@@ -10,13 +10,30 @@ export interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> 
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
-    { className, type, label, error, leftAdornment, rightAdornment, ...props },
+    {
+      className,
+      type,
+      label,
+      error,
+      leftAdornment,
+      rightAdornment,
+      id,
+      ...props
+    },
     ref,
   ) => {
+    // Associate label and error text with the input for screen readers.
+    const generatedId = React.useId();
+    const inputId = id ?? generatedId;
+    const errorId = `${inputId}-error`;
+
     return (
       <div className="w-full space-y-2">
         {label && (
-          <label className="text-theme-faint text-sm leading-none font-medium">
+          <label
+            htmlFor={inputId}
+            className="text-theme-faint text-sm leading-none font-medium"
+          >
             {label}
           </label>
         )}
@@ -27,7 +44,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
           <input
+            id={inputId}
             type={type}
+            aria-invalid={error ? true : undefined}
+            aria-describedby={error ? errorId : undefined}
             className={cn(
               'flex h-11 w-full rounded-xl border px-3 py-2 text-sm transition-all duration-300 file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50',
               leftAdornment ? 'pl-10' : '',
@@ -50,7 +70,11 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
         </div>
-        {error && <p className="text-xs font-medium text-red-500">{error}</p>}
+        {error && (
+          <p id={errorId} className="text-xs font-medium text-red-500">
+            {error}
+          </p>
+        )}
       </div>
     );
   },

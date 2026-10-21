@@ -2,22 +2,22 @@ import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
 /**
- * 🔒 STRICT ENVIRONMENT VALIDATION
+ * STRICT ENVIRONMENT VALIDATION
  * This ensures the application fails-fast if critical environment variables are missing.
- * No more runtime undefined errors.
+ *
+ * The browser never talks to the API directly (BFF pattern), so the API URL is
+ * server-only. Set SKIP_ENV_VALIDATION=1 for builds that run without runtime
+ * secrets (e.g. Docker image builds); the server still validates at startup.
  */
 export const env = createEnv({
   server: {
-    // API_URL is used by Server Components for SSR/BFF calls
-    API_URL: z.string().url(),
+    // API_URL is used by Server Components, Server Actions and the proxy.
+    API_URL: z.url(),
   },
-  client: {
-    // NEXT_PUBLIC_API_URL is exposed to the browser
-    NEXT_PUBLIC_API_URL: z.string().url(),
-  },
-  // We need to destructure process.env for Next.js to properly inline them
+  client: {},
   runtimeEnv: {
     API_URL: process.env.API_URL,
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
   },
+  skipValidation: !!process.env.SKIP_ENV_VALIDATION,
+  emptyStringAsUndefined: true,
 });

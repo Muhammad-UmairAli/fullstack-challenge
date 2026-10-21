@@ -7,8 +7,8 @@ This document explains all authentication changes in simple terms, end-to-end, f
 You now have a secure, token-based auth system with these roles:
 
 - `apps/api` (NestJS): authenticates users, issues JWT tokens, stores refresh tokens in DB, and manages password reset logic.
-- `apps/web` (Next.js): renders login/register/reset pages, calls API via Server Actions, stores tokens in HttpOnly cookies, and protects routes in middleware.
-- `packages/database`: Prisma schema + security extension + persistence for refresh and reset tokens.
+- `apps/web` (Next.js): renders login/register/reset pages, calls API via Server Actions, stores tokens in HttpOnly cookies, and protects routes in the proxy (`proxy.ts`, formerly middleware).
+- `packages/database`: Prisma schema + client factory (password omitted by default) + persistence for hashed refresh and reset tokens.
 - `packages/validators`: shared Zod schemas/types used by both API and web.
 
 ### Flow at a glance
@@ -46,15 +46,13 @@ flowchart LR
 - Added auth/security libraries:
   - `@nestjs/jwt`, `@nestjs/passport`, `passport`, `passport-jwt`: Core auth stack.
   - `argon2`: Industry-standard password hashing.
-  - `cookie-parser`: Middleware to extract cookies for silent refresh.
 
 ## Web (`apps/web`)
 
 ### `apps/web/.env.example`
 
 - Added:
-  - `NEXT_PUBLIC_API_URL`: Exposed to browser for client-side calls.
-  - `API_URL`: Kept server-side for internal service-to-service communication.
+  - `API_URL`: Server-side only; the browser never calls the API directly. (`NEXT_PUBLIC_API_URL` was removed.)
 
 ### `apps/web/package.json`
 
@@ -77,13 +75,14 @@ flowchart LR
 ### `packages/database/prisma/schema.prisma`
 
 - **`User` model**: Added `password` (hashed), `isActive`, and relations to tokens.
-- **`RefreshToken` model**: Stores hashed tokens with `isRevoked` and `expiresAt` for rotation security.
+- **`RefreshToken` model**: Stores SHA-256 hashes of refresh tokens with `isRevoked` and `expiresAt` for rotation security. Each refresh JWT carries a unique `jti`, so tokens issued in the same second never collide.
+- **`PasswordResetToken` model**: Also stores only a SHA-256 hash of the emailed token.
 - **`PasswordResetToken` model**: Stores one-time tokens for password recovery.
 - **Cascade Deletes**: If a user is deleted, all their tokens are automatically purged.
 
-### `packages/database/src/extensions/security.extension.ts`
+### `packages/database/src/client.ts`
 
-- **Prisma Extension**: Automatically scrubs `user.password` from query results.
+- **Global `omit`**: The Prisma client omits `user.password` from every query result unless a query explicitly selects it. (Replaces the earlier result extension, which only applied to a separate `prisma.client` instance and left the default client unprotected.)
 - **Why**: Prevents accidental password leakage in logging or API responses.
 
 ---
@@ -122,7 +121,7 @@ flowchart LR
 ### `apps/api/src/modules/auth/auth.service.ts`
 
 - **`register(data)`**: Hashes passwords with `argon2` and checks for duplicate emails.
-- **`login(data)`**: Uses base Prisma client (to see hashed password) for verification, then issues tokens.
+- **`login(data)`**: Explicitly selects the password hash (omitted everywhere else by default), verifies it, and compares against a dummy hash for unknown emails so response timing does not reveal which accounts exist.
 - **`refreshTokens(userId, refreshToken)`**: Implements **Reuse Detection**. If an old token is reused, all active user tokens are revoked as a precaution.
 - **`generateTokens(userId, email)`**: Now calculates DB `expiresAt` dynamically from the environment configuration (resolving previous hardcoded values).
 - **`logout(refreshToken)`**: Sets `isRevoked: true` in the DB for the specific token.
@@ -167,15 +166,15 @@ flowchart LR
 
 - **`getServerSession()`**: Used in Server Components to check auth state. Reads the `access_token` cookie and calls `/auth/me`.
 
-## Middleware protection and silent refresh
+## Proxy protection and silent refresh
 
-### `apps/web/middleware.ts`
+### `apps/web/proxy.ts`
 
 - **Logic**:
   - If access token exists -> Proceed.
-  - If access token expired but refresh token exists -> Call `/auth/refresh`, set new cookies, and proceed.
+  - If access token expired but refresh token exists -> Call `/auth/refresh`, set new cookies on the response **and** on the forwarded request (so Server Components rendering this request see them), and proceed.
   - If neither exists -> Redirect to `/login`.
-- **Performance**: Performs these checks at the edge, before the page even begins to render.
+- **Runtime**: Next.js 16 runs the proxy on the Node.js runtime before the page renders.
 
 ---
 
@@ -185,9 +184,9 @@ flowchart LR
 
 1. User enters email in the **Forgot Password** form.
 2. Server action calls Nest `/auth/forgot-password`.
-3. Nest generates a secure token, saves it to the DB, and **logs a simulation URL** to the console (development mode).
+3. Nest generates a secure token, saves only its hash to the DB, and **logs a simulation URL** to the console outside production (no mail provider is wired up yet; reset links are never logged in production).
 4. User clicks the link in the console, enters a new password on the **Reset Password** page.
-5. Nest validates the token, hashes the new password, updates the user, and purges the reset token.
+5. Nest validates the token, hashes the new password, updates the user, purges the reset tokens, and revokes every refresh token (signing the user out everywhere).
 
 ---
 

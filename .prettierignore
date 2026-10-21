@@ -2,5 +2,8 @@ node_modules
 dist
 .next
 .turbo
-pnpm-lock.yaml
 coverage
+pnpm-lock.yaml
+**/generated/**
+**/prisma/migrations/**/*.sql
+next-env.d.ts

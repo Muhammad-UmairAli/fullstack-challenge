@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, type Variants } from 'framer-motion';
+import { motion, type Variants } from 'motion/react';
 import { logoutAction } from './actions/auth.actions';
 import { useRouter } from 'next/navigation';
 import { ThemeToggle } from '../components/ui/theme-toggle';

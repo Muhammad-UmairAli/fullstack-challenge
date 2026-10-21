@@ -1,75 +1,82 @@
 import { NestFactory } from '@nestjs/core';
-import { Logger, VersioningType } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module.js';
 import helmet from 'helmet';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
-import { cleanupOpenApiDoc, ZodValidationPipe } from 'nestjs-zod';
+import { cleanupOpenApiDoc } from 'nestjs-zod';
 import { ConfigService } from '@nestjs/config';
-import { GlobalExceptionFilter } from './common/filters/http-exception.filter.js';
-import { ZodExceptionFilter } from './common/filters/zod-exception.filter.js';
-import { TransformInterceptor } from './common/interceptors/transform.interceptor.js';
-import { LoggingInterceptor } from './common/interceptors/logging.interceptor.js';
-import cookieParser from 'cookie-parser';
+import { parseTrustProxy, type Env } from './common/configs/env.validation.js';
+import { configureApp } from './app.setup.js';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const configService = app.get<ConfigService<Env, true>>(ConfigService);
+  const logger = new Logger('Bootstrap');
 
   /**
-   * 1. 🛡️ SECURITY: Middleware
+   * 1. SECURITY: Middleware
    */
   app.use(helmet());
-  app.use(cookieParser());
+
+  // Trust only the configured proxies so req.ip (and thus rate limiting) reflects the real client.
+  app.set(
+    'trust proxy',
+    parseTrustProxy(configService.get('TRUST_PROXY', { infer: true })),
+  );
 
   /**
-   * 2. 🌐 CORS: Configuration
+   * 2. CORS: Configuration
    */
-  const configService = app.get(ConfigService);
-  const frontendUrl = configService.get<string>('FRONTEND_URL');
-
   app.enableCors({
-    origin: frontendUrl,
+    origin: configService.get('FRONTEND_URL', { infer: true }),
     credentials: true,
   });
 
   /**
-   * 3. 🚀 VERSIONING: API Versioning
+   * 3. VERSIONING, PIPES, FILTERS & INTERCEPTORS
+   * Shared with the e2e tests so they exercise the same request pipeline.
    */
-  app.enableVersioning({
-    type: VersioningType.URI,
-    defaultVersion: '1',
-  });
-  app.setGlobalPrefix('api');
+  configureApp(app);
 
   /**
-   * 4. 📖 DOCUMENTATION: Swagger Integration
+   * 4. DOCUMENTATION: Swagger (disabled in production unless explicitly enabled)
    */
-  const config = new DocumentBuilder()
-    .setTitle('Fullstack Challenge API')
-    .setDescription(
-      'Portfolio API with Standardized Responses, Security, and Observability.',
-    )
-    .setVersion('1.0')
-    .addBearerAuth()
-    .build();
+  const nodeEnv = configService.get('NODE_ENV', { infer: true });
+  const swaggerEnabled =
+    configService.get('SWAGGER_ENABLED', { infer: true }) ??
+    nodeEnv !== 'production';
 
-  const document = SwaggerModule.createDocument(app, config);
-  cleanupOpenApiDoc(document);
-  SwaggerModule.setup('api/docs', app, document);
+  if (swaggerEnabled) {
+    const config = new DocumentBuilder()
+      .setTitle('Fullstack Challenge API')
+      .setDescription(
+        'Portfolio API with Standardized Responses, Security, and Observability.',
+      )
+      .setVersion('1.0')
+      .addBearerAuth()
+      .build();
 
-  /**
-   * 5. ✅ GLOBAL PIPES, FILTERS & INTERCEPTORS
-   */
-  app.useGlobalPipes(new ZodValidationPipe());
-  app.useGlobalFilters(new GlobalExceptionFilter(), new ZodExceptionFilter());
-  app.useGlobalInterceptors(new TransformInterceptor());
-  app.useGlobalInterceptors(new LoggingInterceptor());
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, cleanupOpenApiDoc(document));
+  }
 
-  const logger = new Logger('Bootstrap');
-  const port = configService.get<number>('PORT') || 3001;
+  // Lets Nest run onModuleDestroy hooks (e.g. closing DB pools) on SIGTERM/SIGINT.
+  app.enableShutdownHooks();
+
+  const port = configService.get('PORT', { infer: true });
   await app.listen(port);
 
-  logger.log(`🚀 API is running on: http://localhost:${port}/api/v1`);
-  logger.log(`📖 Swagger UI available at: http://localhost:${port}/api/docs`);
+  logger.log(`API is running on: http://localhost:${port}/api/v1`);
+  if (swaggerEnabled) {
+    logger.log(`Swagger UI available at: http://localhost:${port}/api/docs`);
+  }
 }
 
-bootstrap();
+bootstrap().catch((error: unknown) => {
+  new Logger('Bootstrap').error(
+    'Failed to start API',
+    error instanceof Error ? error.stack : String(error),
+  );
+  process.exit(1);
+});
