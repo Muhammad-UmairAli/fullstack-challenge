@@ -6,10 +6,10 @@ packages:
 # Reference with "catalog:" in package.json to keep them in lockstep.
 catalog:
   '@types/jest': ^30.0.0
-  '@types/node': ^26.6.5
-  eslint: ^10.13.0
+  '@types/node': ^26.6.6
+  eslint: ^10.15.0
   jest: ^30.5.2
-  prettier: ^3.9.10
+  prettier: ^3.10.1
   typescript: ^6.0.3
   zod: ^4.6.7
 
